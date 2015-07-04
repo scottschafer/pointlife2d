@@ -65,8 +65,6 @@ void * WorldThreadRunner :: threadFunc(void*) {
         if (minMicroseconds > elapsedTime) {
             usleep(minMicroseconds - elapsedTime);
         }
-
-        glutPostRedisplay();
     }
     return NULL;
 }

@@ -213,6 +213,8 @@ void display()
     
     glFinish();
     glutSwapBuffers();
+
+    glutPostRedisplay();
 }
 
 /*! glut reshape callback function.  GLUT calls this function whenever
