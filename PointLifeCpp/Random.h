@@ -14,8 +14,8 @@
 class Random {
 public:
     static void init();
-    static NUM_TYPE rand();
-    static NUM_TYPE randRange(NUM_TYPE minV, NUM_TYPE maxV);
+    static NUMBER rand();
+    static NUMBER randRange(NUMBER minV, NUMBER maxV);
     static int randRange(int minV, int maxV);
 };
 

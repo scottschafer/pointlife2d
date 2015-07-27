@@ -9,6 +9,7 @@
 #include "WorldSpace.h"
 
 #define TRACE_FINDER if(false)TRACE
+//#define HEAPCHECK testConsistency()
 #define HEAPCHECK
 #define TRACE(x,...)
 
@@ -27,7 +28,11 @@ void WorldSpace::clear()
 void WorldSpace:: insert(Cell * pCell, int x, int y)
 {
     HEAPCHECK;
-    
+
+    if ((x < 0) || (y < 0) || (x >= WORLD_DIM) || (y >= WORLD_DIM)) {
+        return;
+    }
+   
     pCell->mPrev = NULL;
     pCell->mNext = mDivisions[x][y];
     if (pCell->mNext != NULL) {
@@ -40,8 +45,20 @@ void WorldSpace:: insert(Cell * pCell, int x, int y)
     HEAPCHECK;
 }
 
+void WorldSpace :: remove(Cell * pCell)
+{
+#if BATCH_MOVE_POINTS
+    remove(pCell, (int) pCell->mSavePos.x, (int) pCell->mSavePos.y);
+#else
+    remove(pCell, (int) pCell->mPos.x, (int) pCell->mPos.y);
+#endif
+}
+
 void WorldSpace:: remove(Cell * pCell, int x, int y)
 {
+    if ((x < 0) || (y < 0) || (x >= WORLD_DIM) || (y >= WORLD_DIM)) {
+        return;
+    }
     HEAPCHECK;
     
     if (! pCell->mOnBoard) {
@@ -65,7 +82,18 @@ void WorldSpace:: remove(Cell * pCell, int x, int y)
     HEAPCHECK;
 }
 
-void WorldSpace:: move(Cell * pCell, NUM_TYPE oldX, NUM_TYPE oldY, NUM_TYPE newX, NUM_TYPE newY)
+void WorldSpace::move (Cell *pCell, NUMBER newX, NUMBER newY) {
+    HEAPCHECK;
+
+#if BATCH_MOVE_POINTS
+    move(pCell, (int) pCell->mSavePos.x, (int) pCell->mSavePos.y, newX, newY);
+#else
+    move(pCell, pCell->mPos.x, pCell->mPos.y, newX, newY);
+#endif
+    
+}
+
+void WorldSpace:: move(Cell * pCell, NUMBER oldX, NUMBER oldY, NUMBER newX, NUMBER newY)
 {
     HEAPCHECK;
     
@@ -73,6 +101,13 @@ void WorldSpace:: move(Cell * pCell, NUM_TYPE oldX, NUM_TYPE oldY, NUM_TYPE newX
     int oy = (int) oldY;
     int nx = (int) newX;
     int ny = (int) newY;
+    
+    /*
+    ox = MAX(0,MIN(ox, MAX_COORD));
+    oy = MAX(0,MIN(oy, MAX_COORD));
+    nx = MAX(0,MIN(nx, MAX_COORD));
+    ny = MAX(0,MIN(ny, MAX_COORD));
+*/
     if (ox != nx || oy != ny) {
         remove(pCell, ox, oy);
         pCell->mPos.x = newX;
@@ -84,10 +119,14 @@ void WorldSpace:: move(Cell * pCell, NUM_TYPE oldX, NUM_TYPE oldY, NUM_TYPE newX
         pCell->mPos.y = newY;
     }
     
+#if BATCH_MOVE_POINTS
+    pCell->mSavePos.x = newX;
+    pCell->mSavePos.y = newY;
+#endif
     HEAPCHECK;
 }
 
-int WorldSpace::getNearbyCells(Point pt, NUM_TYPE distance, CellPtr *pResultArray, int maxResults, Cell *pExclude)
+int WorldSpace::getNearbyCells(Point pt, NUMBER distance, CellPtr *pResultArray, int maxResults, Cell *pExclude)
 {
     HEAPCHECK;
     
@@ -100,13 +139,15 @@ int WorldSpace::getNearbyCells(Point pt, NUM_TYPE distance, CellPtr *pResultArra
     int fY = (int) MAX(pt.y - distance, 0);
     int tY = (int) MIN(pt.y + distance, MAX_COORD);
     
+    distance *= distance;
+    
     for (int x = fX; x <= tX; x++) {
         for (int y = fY; y <= tY; y++) {
             CellPtr pCell = mDivisions[x][y];
             while (pCell != NULL) {
                 
                 if (pExclude == NULL || pExclude != pCell) {
-                    NUM_TYPE d = pt.distance(pCell->mPos);
+                    NUMBER d = pt.squaredDistance(pCell->mPos);
 
                     if (d <= distance)
                     {
@@ -132,7 +173,7 @@ int WorldSpace::getNearbyCells(Point pt, NUM_TYPE distance, CellPtr *pResultArra
 }
 
 
-int WorldSpace :: getNearbyCells(int excludeGeneration, Point pt, NUM_TYPE distance, CellPtr *pResultArray, int maxResults) {
+int WorldSpace :: getNearbyCells(int excludeGeneration, Point pt, NUMBER distance, CellPtr *pResultArray, int maxResults) {
     int result = 0;
     
     // detemine the square to search
@@ -142,13 +183,15 @@ int WorldSpace :: getNearbyCells(int excludeGeneration, Point pt, NUM_TYPE dista
     int fY = (int) MAX(pt.y - distance, 0);
     int tY = (int) MIN(pt.y + distance, MAX_COORD);
     
+    distance *= distance;
+    
     for (int x = fX; x <= tX; x++) {
         for (int y = fY; y <= tY; y++) {
             CellPtr pCell = mDivisions[x][y];
             while (pCell != NULL) {
                 
                 if (pCell->mGeneration != excludeGeneration) {
-                    NUM_TYPE d = pt.distance(pCell->mPos);
+                    NUMBER d = pt.squaredDistance(pCell->mPos);
                     
                     if (d <= distance)
                     {
@@ -172,3 +215,49 @@ int WorldSpace :: getNearbyCells(int excludeGeneration, Point pt, NUM_TYPE dista
     
     return result;
 }
+
+static Cell * cells;
+
+void WorldSpace::setCells(Cell *pCells) {
+    cells = pCells;
+}
+
+void WorldSpace::testConsistency() {
+    for (int i = 0; i < NUM_CELLS; i++) {
+        Cell * pCell = &cells[i];
+        if (pCell->mOnBoard) {
+            int x = (int) pCell->mPos.x;
+            int y = (int) pCell->mPos.y;
+            
+            bool bFound = false;
+            Cell * pTestCell = mDivisions[x][y];
+            if (pTestCell->mPrev)
+                throw "head has prev";
+            
+            while (pTestCell) {
+                if (pTestCell == pCell) {
+                    bFound = true;
+                    break;
+                }
+                if (pTestCell->mNext->mPrev != pTestCell)
+                    throw "badlink";
+                pTestCell = pTestCell->mNext;
+            }
+            
+            if (! bFound)
+                throw "not found";
+        }
+    }
+    
+    for (int x = 0; x < WORLD_DIM; x++) {
+        for (int y = 0; y < WORLD_DIM; y++) {
+            Cell * pTestCell = mDivisions[x][y];
+            while (pTestCell) {
+                if (! pTestCell->mOnBoard)
+                    throw "not on board";
+                pTestCell = pTestCell->mNext;
+            }
+        }
+    }
+}
+

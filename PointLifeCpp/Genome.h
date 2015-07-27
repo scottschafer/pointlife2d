@@ -13,9 +13,13 @@
 
 class Genome {
     
+public:
     Genome();
     
+    Genome & operator = (const Genome & src);
     void randomize();
+    Genome breed(const Genome &);
+    void mutate();
     
     BYTE genome[GENOME_LENGTH];
 };

@@ -8,7 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		522D87D21B3C509B00518DE2 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 522D87D11B3C509B00518DE2 /* main.cpp */; };
+		523C3A231B548EC70078D2CF /* Organism.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 523C3A211B548EC70078D2CF /* Organism.cpp */; };
 		52BEBDA41B42224200727AFE /* Genome.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 52BEBDA21B42224200727AFE /* Genome.cpp */; };
+		52C622071B4AC37400A63DBE /* globals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 52C622051B4AC37400A63DBE /* globals.cpp */; };
+		52C6220A1B4ACF5C00A63DBE /* CreatureConstructor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 52C622081B4ACF5C00A63DBE /* CreatureConstructor.cpp */; };
 		52C96BA91B3C54E900011C42 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52C96BA71B3C54E900011C42 /* GLUT.framework */; };
 		52C96BAA1B3C54E900011C42 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52C96BA81B3C54E900011C42 /* OpenGL.framework */; };
 		52C96BB11B3C5BE500011C42 /* WorldSpace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 52C96BB01B3C5BE500011C42 /* WorldSpace.cpp */; };
@@ -33,8 +36,14 @@
 /* Begin PBXFileReference section */
 		522D87CE1B3C509B00518DE2 /* PointLifeCpp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = PointLifeCpp; sourceTree = BUILT_PRODUCTS_DIR; };
 		522D87D11B3C509B00518DE2 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		523C3A211B548EC70078D2CF /* Organism.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Organism.cpp; sourceTree = "<group>"; };
+		523C3A221B548EC70078D2CF /* Organism.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Organism.h; sourceTree = "<group>"; };
 		52BEBDA21B42224200727AFE /* Genome.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Genome.cpp; sourceTree = "<group>"; };
 		52BEBDA31B42224200727AFE /* Genome.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Genome.h; sourceTree = "<group>"; };
+		52C622051B4AC37400A63DBE /* globals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = globals.cpp; sourceTree = "<group>"; };
+		52C622061B4AC37400A63DBE /* globals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = globals.h; sourceTree = "<group>"; };
+		52C622081B4ACF5C00A63DBE /* CreatureConstructor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CreatureConstructor.cpp; sourceTree = "<group>"; };
+		52C622091B4ACF5C00A63DBE /* CreatureConstructor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CreatureConstructor.h; sourceTree = "<group>"; };
 		52C96BA71B3C54E900011C42 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = ../../../../System/Library/Frameworks/GLUT.framework; sourceTree = DEVELOPER_DIR; };
 		52C96BA81B3C54E900011C42 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = ../../../../System/Library/Frameworks/OpenGL.framework; sourceTree = DEVELOPER_DIR; };
 		52C96BAB1B3C55D900011C42 /* constants.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = constants.h; sourceTree = "<group>"; };
@@ -100,6 +109,12 @@
 				52C96BB91B3CCB0600011C42 /* WorldThreadRunner.h */,
 				52BEBDA21B42224200727AFE /* Genome.cpp */,
 				52BEBDA31B42224200727AFE /* Genome.h */,
+				52C622051B4AC37400A63DBE /* globals.cpp */,
+				52C622061B4AC37400A63DBE /* globals.h */,
+				52C622081B4ACF5C00A63DBE /* CreatureConstructor.cpp */,
+				52C622091B4ACF5C00A63DBE /* CreatureConstructor.h */,
+				523C3A211B548EC70078D2CF /* Organism.cpp */,
+				523C3A221B548EC70078D2CF /* Organism.h */,
 			);
 			path = PointLifeCpp;
 			sourceTree = "<group>";
@@ -160,9 +175,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				52C6220A1B4ACF5C00A63DBE /* CreatureConstructor.cpp in Sources */,
+				52C622071B4AC37400A63DBE /* globals.cpp in Sources */,
 				52C96BBA1B3CCB0600011C42 /* WorldThreadRunner.cpp in Sources */,
 				52C96BB61B3C961200011C42 /* Random.cpp in Sources */,
 				522D87D21B3C509B00518DE2 /* main.cpp in Sources */,
+				523C3A231B548EC70078D2CF /* Organism.cpp in Sources */,
 				52E60A7E1B4370710053962B /* Cell.cpp in Sources */,
 				52C96BB11B3C5BE500011C42 /* WorldSpace.cpp in Sources */,
 				52BEBDA41B42224200727AFE /* Genome.cpp in Sources */,

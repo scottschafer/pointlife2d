@@ -20,17 +20,17 @@
  */
 
 #define POINT_REF Point
-#define USE_FAST_DISTANCE 1
 //#define POINT_REF const Point &
 
 class Point {
 public:
-    NUM_TYPE x, y;
+    NUMBER x, y;
 
     Point() {
+        x = y = 0;
     }
     
-    Point(NUM_TYPE x, NUM_TYPE y) : x(x), y(y) {
+    Point(NUMBER x, NUMBER y) : x(x), y(y) {
     }
     
     void reset() {
@@ -47,7 +47,17 @@ public:
         return *this;
     }
     
-    inline NUM_TYPE distance(POINT_REF p2) {
+    NUMBER squaredDistance(POINT_REF p2) {
+        NUMBER x = this->x - p2.x;
+        NUMBER y = this->y - p2.y;
+        return x * x + y * y;
+    }
+        
+    NUMBER dot(POINT_REF p2) {
+        return x * p2.x + y * p2.y;
+    }
+    
+    inline NUMBER distance(POINT_REF p2) {
 #if USE_FAST_DISTANCE
         return fastDistance(p2);
 #else
@@ -55,7 +65,7 @@ public:
 #endif
     }
     
-    inline NUM_TYPE distance() {
+    inline NUMBER distance() {
 #if USE_FAST_DISTANCE
         return MAX(ABS(x),ABS(y));
 #else
@@ -63,18 +73,23 @@ public:
 #endif
     }
     
-    inline NUM_TYPE fastDistance(POINT_REF p2)
+    inline NUMBER fastLength()
     {
-        NUM_TYPE xd = x - p2.x;
-        NUM_TYPE yd = y - p2.y;
+        return MAX(ABS(x),ABS(y));
+    }
+
+    inline NUMBER fastDistance(POINT_REF p2)
+    {
+        NUMBER xd = x - p2.x;
+        NUMBER yd = y - p2.y;
         
         return MAX(ABS(xd),ABS(yd));
     }
     
-    inline NUM_TYPE accurateDistance(POINT_REF p2)
+    inline NUMBER accurateDistance(POINT_REF p2)
     {
-        NUM_TYPE xd = x - p2.x;
-        NUM_TYPE yd = y - p2.y;
+        NUMBER xd = x - p2.x;
+        NUMBER yd = y - p2.y;
         
         return SQRT(xd*xd+yd*yd);
     }
@@ -84,20 +99,20 @@ public:
         y = Random::randRange(0, MAX_COORD);
     }
     
-    void randomize(NUM_TYPE min, NUM_TYPE max) {
+    void randomize(NUMBER min, NUMBER max) {
         x = Random::randRange(min, max);
         y = Random::randRange(min, max);
     }
 };
 
-inline NUM_TYPE accurateDistance(NUM_TYPE x1, NUM_TYPE y1, NUM_TYPE x2, NUM_TYPE y2) {
+inline NUMBER accurateDistance(NUMBER x1, NUMBER y1, NUMBER x2, NUMBER y2) {
     x1 -= x2;
     y1 -= y2;
     
     return SQRT(x1*x1+y1*y1);
 }
 
-inline NUM_TYPE accurateDistance(NUM_TYPE x1, NUM_TYPE y1) {
+inline NUMBER accurateDistance(NUMBER x1, NUMBER y1) {
     return SQRT(x1*x1+y1*y1);
 }
 

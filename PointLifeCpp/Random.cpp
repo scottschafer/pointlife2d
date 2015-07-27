@@ -12,7 +12,7 @@
 
 #define RAND_ARRAY_SIZE 65535
 
-static NUM_TYPE * arrayRandoms = NULL;
+static NUMBER * arrayRandoms = NULL;
 static int randIndex = 0;
 
 /**
@@ -24,11 +24,14 @@ void Random::init() {
     srand (time(NULL));
     
     if (arrayRandoms == NULL) {
-        arrayRandoms = new NUM_TYPE[RAND_ARRAY_SIZE];
+        arrayRandoms = new NUMBER[RAND_ARRAY_SIZE];
         for (int i = 0; i < RAND_ARRAY_SIZE; i++) {
             double r = double(::rand());
             r /= double(RAND_MAX);
             
+            if (r >= 1.0) {
+                r = 0.999999999999;
+            }
             arrayRandoms[i] = r;
         }
     }
@@ -37,18 +40,18 @@ void Random::init() {
 /**
  * Get the next rand, in the range of >= 0 and < 1
  */
-NUM_TYPE Random::rand() {
+NUMBER Random::rand() {
     randIndex = (randIndex + 1) % RAND_ARRAY_SIZE;
     return arrayRandoms[randIndex];
 }
 
 
-NUM_TYPE Random::randRange(NUM_TYPE minV, NUM_TYPE maxV) {
-    NUM_TYPE r = Random::rand();
+NUMBER Random::randRange(NUMBER minV, NUMBER maxV) {
+    NUMBER r = Random::rand();
     return minV + r * (maxV - minV);
 }
 
 int Random::randRange(int minV, int maxV) {
-    NUM_TYPE r = Random::rand();
+    NUMBER r = Random::rand();
     return (int) (minV + r * (maxV - minV));
 }

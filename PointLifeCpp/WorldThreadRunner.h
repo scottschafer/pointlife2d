@@ -13,17 +13,21 @@
 
 #include "World.h"
 
+class WorldThreadMutex {
+public:
+    WorldThreadMutex();
+    ~WorldThreadMutex();
+};
+
 class WorldThreadRunner {
 public:
     static void start();
     static void pause();
     static void resume();
-    static void setMinMsPerTurn(int ms);
     static void exit();
 
     static World & getWorld() { return mWorld; }
     
-private:
     static void * threadFunc(void*);
     
 private:

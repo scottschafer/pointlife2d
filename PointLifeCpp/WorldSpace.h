@@ -19,18 +19,23 @@ public:
     void clear();
     void insert(Cell* pCell) { insert(pCell, (int) pCell->mPos.x, (int) pCell->mPos.y); }
     void insert(Cell*, int x, int y);
-    void remove(Cell * pCell) { remove(pCell, (int) pCell->mPos.x, (int) pCell->mPos.y); }
+    void remove(Cell * pCell);
     void remove(Cell *, int x, int y);
-    void move(Cell *pCell, NUM_TYPE newX, NUM_TYPE newY) { move(pCell, pCell->mPos.x, pCell->mPos.y, newX, newY); }
-    void move(Cell *pCell, NUM_TYPE oldX, NUM_TYPE oldY, NUM_TYPE newX, NUM_TYPE newY);
+    void move(Cell *pCell, NUMBER newX, NUMBER newY);
+    void move(Cell *pCell, NUMBER oldX, NUMBER oldY, NUMBER newX, NUMBER newY);
     
-    int getNearbyCells(Point pt, NUM_TYPE distance, CellPtr *pResultArray, int maxResults = 16, Cell *pExclude = NULL);
+    int getNearbyCells(Point pt, NUMBER distance, CellPtr *pResultArray, int maxResults = 16, Cell *pExclude = NULL);
     
-    int getNearbyCells(Cell * pNearCell, NUM_TYPE distance, CellPtr *pResultArray, int maxResults = 16) {
+    int getNearbyCells(Cell * pNearCell, NUMBER distance, CellPtr *pResultArray, int maxResults = 16) {
         return getNearbyCells(pNearCell->mPos, distance, pResultArray, maxResults, pNearCell);
     }
     
-    int getNearbyCells(int excludeGeneration, Point pt, NUM_TYPE distance, CellPtr *pResultArray, int maxResults = 16);
+    int getNearbyCells(int excludeGeneration, Point pt, NUMBER distance, CellPtr *pResultArray, int maxResults = 16);
+
+    void setCells(Cell * pCell);
+
+private:
+    void testConsistency();
     
 private:
     CellPtr mDivisions[WORLD_DIM][WORLD_DIM];

@@ -9,6 +9,7 @@
 
 #include "WorldThreadRunner.h"
 #include "World.h"
+#include "Globals.h"
 #include <pthread.h>
 #include <unistd.h>
 #include <GLUT/glut.h>
@@ -17,7 +18,6 @@ World WorldThreadRunner :: mWorld;
 
 static bool isPaused = false;
 static bool alive = false;
-static int minMsPerTurn = 0;
 
 static pthread_t worldThread;
 
@@ -40,10 +40,6 @@ void WorldThreadRunner :: resume() {
     isPaused = false;
 }
 
-void WorldThreadRunner :: setMinMsPerTurn(int ms) {
-    minMsPerTurn = ms;
-}
-
 void WorldThreadRunner :: exit() {
     alive = false;
 }
@@ -54,12 +50,17 @@ inline long curMicroseconds() {
 
 void * WorldThreadRunner :: threadFunc(void*) {
 
+    
     while (alive) {
-        
-        long minMicroseconds = minMsPerTurn * 1000;
+        long minMicroseconds = Globals::minMsPerTurn;
+        minMicroseconds *= minMicroseconds;
+        minMicroseconds *= 1000;
         
         long startTime = curMicroseconds();
-        mWorld.turnCrank();
+        {
+            WorldThreadMutex wtm;
+            mWorld.turnCrank();
+        }
         long elapsedTime = curMicroseconds() - startTime;
 
         if (minMicroseconds > elapsedTime) {
@@ -67,4 +68,19 @@ void * WorldThreadRunner :: threadFunc(void*) {
         }
     }
     return NULL;
+}
+
+
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+WorldThreadMutex::WorldThreadMutex() {
+#if USE_SIMULATION_THREAD
+    pthread_mutex_lock( &mutex );
+#endif
+}
+
+WorldThreadMutex::~WorldThreadMutex() {
+#if USE_SIMULATION_THREAD
+    pthread_mutex_unlock( &mutex );
+#endif
 }
