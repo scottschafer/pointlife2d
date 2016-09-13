@@ -33,5 +33,4 @@ public:
 private:
     static World mWorld;
 };
-
 #endif /* defined(__PointLifeCpp__WorldThreadRunner__) */

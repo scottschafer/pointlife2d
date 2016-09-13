@@ -75,11 +75,10 @@ Cell * CreatureConstructor :: addCell(BYTE g, NUMBER x, NUMBER y) {
         BYTE param = (g & 15);
         pResult->mParam = param;
         
-        pResult->mCellType = instruction & 3;
+        pResult->mAction = instruction & 3;
         pResult->mPhase = 10;//param + 1;
-        switch (pResult->mCellType) {
+        switch (pResult->mAction) {
             case actionFlagellum:
-            case actionContract:
                 pResult->mPhase = (param < 7) ? (10 + param * 10) : 10000;
                 break;
         }
@@ -288,9 +287,9 @@ Cell * CreatureConstructor :: createCell(int genomeIndex, NUMBER angle, NUMBER x
     BYTE instruction = (g >> 4);
     BYTE param = (g & 15);
     
-    cell.mCellType = instruction & 3;
+    cell.mAction = instruction & 3;
     cell.mPhase = param * 5 + 1;
-    if (cell.mCellType == actionFlagellum) {
+    if (cell.mAction == actionFlagellum) {
         if ( param < 7) {
             cell.mPhase = 1000;
          }
@@ -329,7 +328,7 @@ Cell * CreatureConstructor :: createCell(int genomeIndex, NUMBER angle, NUMBER x
                 break;
                 int numNearby = wp.getNearbyCells(Point(x, y), dist, buffer);
                 for (int j = 0; j < numNearby; j++) {
-                    if (buffer[j]->mEntityIndex == mEntityIndex && (buffer[j]->mCellType & 3) == (param & 3)) {
+                    if (buffer[j]->mEntityIndex == mEntityIndex && (buffer[j]->mAction & 3) == (param & 3)) {
                         pConnectWithCell = buffer[j];
                         break;
                     }
@@ -389,15 +388,11 @@ bool CreatureConstructor :: finalize() {
     for (int i = 0; i < mAddedCells.size(); i++) {
         Cell * pCell = mAddedCells[i];
         
-        if (pCell->mNumAllConnections > 2) {
-            pCell->mCellType = 0;
-        }
-        
         pCell->mInitialEnergy = pCell->mEnergy;
         
         pCell->mDefaultPhase = pCell->mPhase;
         
-        switch (pCell->mCellType) {
+        switch (pCell->mAction) {
             case actionBite:
             case actionContract:
             case actionFlagellum:
@@ -408,7 +403,7 @@ bool CreatureConstructor :: finalize() {
     if (actioncount == 0) {
         for (int i = 0; i < mAddedCells.size(); i++) {
             Cell * pCell = mAddedCells[i];
-            pCell->mCellType = 0;
+            pCell->mAction = 0;
         }
         return false;
     }
@@ -587,7 +582,7 @@ void CreatureConstructor :: go(Cell * pFromCell, NUMBER angle) {
                     pNewCell->mMaxConnectionLength[i] = elasticity * CELL_SIZE;
                 }
                 
-                pNewCell->mCellType = param;
+                pNewCell->mAction = param;
                 pNewCell->mPhase = 10;
                 
                 if (pFromCell) {
@@ -711,7 +706,7 @@ void CreatureConstructor :: go(Cell * pFromCell, NUMBER angle) {
                     pNewCell->mMaxConnectionLength[i] = elasticity * CELL_SIZE;
                 }
                 
-                pNewCell->mCellType = param;
+                pNewCell->mAction = param;
                 pNewCell->mPhase = 10;
 
                 if (pFromCell) {

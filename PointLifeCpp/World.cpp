@@ -14,17 +14,16 @@
 
 #define NUM_CONNECTION_PHYSICS_ITERATIONS 5
 //25
-#define CONTRACT_TURN_COUNT 30
+#define CONTRACT_TURN_COUNT 100
 #define INACTIVE_AFTER_BITE_COUNT 20
 //50
-#define VELOCITY_DAMPING .999
+#define VELOCITY_DAMPING 1
 
 const NUMBER TURN_COST = 0.0001;
 const NUMBER BITE_GAIN = 6;
 const NUMBER BITE_COST = 6;
 const NUMBER MOVE_ENERGY = .002;
-const NUMBER FLAGELLUM_TURNS = 15;
-const NUMBER MOVE_FORCE = .3;
+const NUMBER FLAGELLUM_TURNS = 20;
 
 #define MAX_VELOCITY (CELL_SIZE*.4)
 
@@ -57,7 +56,6 @@ World::World() {
         mCells[i].mEntityIndex = i;
     }
     
-//    randomize();
     mWorldSpace.setCells(mCells);
     endFitnessTest();
     
@@ -85,7 +83,6 @@ void World :: randomize()
         cell.randomize();
         mWorldSpace.insert(&cell);
     }
-//    mNumCells = NUM_CELLS;
 }
 
 void World::spawn() {
@@ -135,12 +132,9 @@ void World :: applyPointPhysics(NUMBER fraction) {
             
             NUMBER threshhold = 1;
             
-            bool hitWall = false;
-            
             if (x < threshhold) {
                 if (pCell->mVelocity.x < 0) {
                     pCell->mVelocity.x = -pCell->mVelocity.x * wallDamper;
-                    hitWall = true;
                 }
                 
                 if (x < 0) {
@@ -150,7 +144,6 @@ void World :: applyPointPhysics(NUMBER fraction) {
             if (x > (WORLD_DIM - threshhold)) {
                 if (pCell->mVelocity.x > 0) {
                     pCell->mVelocity.x = -pCell->mVelocity.x * wallDamper;
-                    hitWall = true;
                 }
                 
                 if (x > WORLD_DIM) {
@@ -161,7 +154,6 @@ void World :: applyPointPhysics(NUMBER fraction) {
             if (y < threshhold) {
                 if (pCell->mVelocity.y < 0) {
                     pCell->mVelocity.y = -pCell->mVelocity.y * wallDamper;
-                    hitWall = true;
                 }
                 
                 if (y < 0) {
@@ -171,7 +163,6 @@ void World :: applyPointPhysics(NUMBER fraction) {
             if (y > (WORLD_DIM - threshhold)) {
                 if (pCell->mVelocity.y > 0) {
                     pCell->mVelocity.y = -pCell->mVelocity.y * wallDamper;
-                    hitWall = true;
                 }
                 
                 if (y > WORLD_DIM) {
@@ -179,9 +170,6 @@ void World :: applyPointPhysics(NUMBER fraction) {
                 }
             }
             
-            if (hitWall) {
-                sendSignal(pCell, 8);
-            }
             /*
             if (x < threshhold && pCell->mVelocity.x < 0) {
                 pCell->mVelocity.x = -pCell->mVelocity.x;
@@ -271,7 +259,7 @@ void World :: applyConnectionPhysics(NUMBER fraction) {
             NUMBER distance = accurateDistance(xd, yd);
             if (distance == 0) { continue; }
             
-//            fraction = 1.0;
+            fraction = 1.0;
             NUMBER minDist = CELL_SIZE;
             NUMBER maxDist = pCell->mMaxConnectionLength[j];
             
@@ -280,7 +268,7 @@ void World :: applyConnectionPhysics(NUMBER fraction) {
                 double fraction = double(1.0 + pCell->mContractTurnCount - CONTRACT_TURN_COUNT / 2) / double(CONTRACT_TURN_COUNT);
                 fraction *= fraction * 4; // 1 to 0 to 1
                 
-                maxDist = maxDist * fraction + (1.0 - fraction) * CELL_SIZE;
+                //maxDist = maxDist * fraction + (1.0 - fraction) * CELL_SIZE;
             }
             
             if (maxDist < minDist) {
@@ -342,18 +330,10 @@ void World :: sendSignal(Cell * pCell, int signal, int level) {
         Cell * pToCell = pCell->mConnections[i];
         if (pCell->mConnectionOptions[i] & signal) {
             pToCell->mActivated = true;
-            switch (pToCell->mCellType) {
-                    
-                case actionFlagellum:
-                case actionContract:
-                    pToCell->mPhase = 2;
-                    return;
-            }
-
-            /*if (pToCell->mCellType == actionFlagellum) {
+            if (pToCell->mAction == actionFlagellum) {
                 pToCell->mPhase = 2;// + level * 5;
                 return;
-            }*/
+            }
             sendSignal(pToCell, signal, level + 1);
         }
     }
@@ -379,7 +359,7 @@ void World :: detectCollisions(NUMBER fraction) {
             
             collisionDistance = CELL_SIZE;
             if (pCell->mNumConnections) {
-                collisionDistance *= 1.15;
+                collisionDistance *= 1.05;
             }
             /*
             for (int j = 0; j < pCell->mNumConnections; j++) {
@@ -402,8 +382,9 @@ void World :: detectCollisions(NUMBER fraction) {
                     
                     NUMBER scaleToVelocity = 1.0;
                     if (pCell->mNumConnections > 1 &&
-                        pCell->mCellType == actionBite &&
+                        pCell->mAction == actionBite &&
                         pToCell->mEntityIndex != pCell->mEntityIndex &&
+                        // pToCell->mAction != actionBite &&
                         ! pCell->mInactiveCount) {
                         
                         // the more that we are moving in the direction of the attack, the stronger the bite
@@ -419,12 +400,12 @@ void World :: detectCollisions(NUMBER fraction) {
                         double maxEnergy = BASE_ENERGY_PER_CELL * getEntityLength(pCell) * 1.5;
                         double newEnergy = pCell->mEntityHead->mEnergy + BITE_GAIN * biteStrength;
                         if (newEnergy < maxEnergy) {
-                            pCell->mEntityHead->mEnergy -= BITE_COST * biteStrength;
+                            pToCell->mEntityHead->mEnergy -= BITE_COST * biteStrength;
                             
                             scaleToVelocity = 0.7;
                             sendSignal(pCell, 1);
                             sendSignal(pToCell, 2);
-                            pCell->mLastAte = INACTIVE_AFTER_BITE_COUNT;
+                            pCell->mLastAte = 10;
                         }
                         
 //                        pToCell->mInactiveCount = INACTIVE_AFTER_BITE_COUNT;
@@ -501,7 +482,7 @@ void enableMove(Cell *pCell, int * pTimeout) {
         for (int i = 0; i < pCell->mNumConnections; i++) {
             Cell * pConnectedCell = pCell->mConnections[i];
             
-            if (pConnectedCell && pConnectedCell->mCellType == actionFlagellum) {
+            if (pConnectedCell && pConnectedCell->mAction == actionFlagellum) {
                 pConnectedCell->mPhase = 2;
                 *pTimeout = 0;
                 return;
@@ -543,14 +524,13 @@ void World :: processCellActivity() {
         int numConnections = pCell->mNumConnections;
         int totalConnections = numConnections + pCell->mNumSecondaryConnections;
         
-        int action = pCell->mCellType;
+        int action = pCell->mAction;
         
 
         if (numConnections > 1 && (turn % pCell->mPhase) == 0) {
             
             if (action == actionContract) {
                 contract(pCell);
-                pCell->mPhase = pCell->mDefaultPhase + CONTRACT_TURN_COUNT;
             }
             else
             if ((pCell->mNumAllConnections <= 3) && (action == actionFlagellum || action == actionLook)) {
@@ -562,9 +542,6 @@ void World :: processCellActivity() {
                 NUMBER length = pCell->mNumAllConnections + 2;
 
                 pCell->mPhase = pCell->mDefaultPhase;
-                if (actionFlagellum) {
-                    pCell->mPhase += FLAGELLUM_TURNS;
-                }
                 Point v(CELL_SIZE * xd / length, CELL_SIZE * yd / length);
 
                 switch (action) {
@@ -698,19 +675,17 @@ void World :: turnCrank() {
             if (pCell->mLastFlagellum) {
                 --pCell->mLastFlagellum;
                 
-                if (pCell->mNumAllConnections) {
                 NUMBER xd = 0, yd = 0;
-                    for (int j = 0; j < pCell->mNumAllConnections; j++) {
-                        xd += pCell->mPos.x - pCell->mAllConnections[j]->mPos.x;
-                        yd += pCell->mPos.y - pCell->mAllConnections[j]->mPos.y;
-                    }
-
-                    xd *= CELL_SIZE * MOVE_FORCE / NUMBER(pCell->mNumAllConnections);
-                    yd *= CELL_SIZE * MOVE_FORCE / NUMBER(pCell->mNumAllConnections);
-                    Point v(xd, yd);
-                    pCell->mFlagellumVector = Point(v.x * 30, v.y * 50);
-                    pCell->mVelocity.x -= v.x;
-                    pCell->mVelocity.y -= v.y;
+                for (int j = 0; j < pCell->mNumAllConnections; j++) {
+                    xd += pCell->mPos.x - pCell->mAllConnections[j]->mPos.x;
+                    yd += pCell->mPos.y - pCell->mAllConnections[j]->mPos.y;
+                }
+                NUMBER length = pCell->mNumAllConnections;// + 2.0;
+                if (length) {
+                Point v(CELL_SIZE * xd / length, CELL_SIZE * yd / length);
+                pCell->mFlagellumVector = Point(v.x * 50, v.y * 50);
+                pCell->mVelocity.x -= v.x;
+                pCell->mVelocity.y -= v.y;
                 }
                 else {
                     printf("hey");
@@ -868,29 +843,6 @@ void World :: endFitnessTest() {
     int dim = sqrt(numToTest);
     
     reset();
-    
-    /*if (mFitnessGeneration == 0) {
-        for (int i = 0; i < numToTest; i++) {
-            
-            int ix = i % dim;
-            int iy = int(i / dim);
-            
-            NUMBER x = (NUMBER(ix) + .5) * NUMBER(WORLD_DIM) / NUMBER(dim);
-            NUMBER y = (NUMBER(iy) + .5) * NUMBER(WORLD_DIM) / NUMBER(dim);
-
-            while (true) {
-                genepool[i].genome.randomize();
-                CreatureConstructor c(*this, genepool[i].genome);
-                if (c.go(x, y)) {
-                    break;
-                }
-                else {
-                    c.deleteAddedCells();
-                }
-            }
-        }
-    }
-    */
 }
 
 void World::generateNewEntity(Genome g) {
@@ -977,7 +929,7 @@ double World :: calcFitness() {
             if (mCells[i].mEnergy > 0)
                 ++ate;
             result -= .1;
-            switch (mCells[i].mCellType) {
+            switch (mCells[i].mAction) {
                 case actionBite:
                     result -= 3;
                     break;
@@ -1118,12 +1070,6 @@ void World :: prepareGenerationForTest() {
 #endif
         
     }
-    
-    /*
-    for (i = 0; i < NUM_GENOMES_TO_TEST; i++) {
-        genepool[i].score = 0;
-    }
-     */
 }
 
 int World :: getGeneration() {

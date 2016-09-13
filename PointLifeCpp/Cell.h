@@ -55,7 +55,6 @@ public:
     
     Cell *mClockwise;
     double mEnergy;
-    double mElasticity;
 
     int mIndex;
     int mGeneration;
@@ -74,7 +73,7 @@ public:
     Genome * mGenome;
     bool mOwnsConnection[MAX_CONNECTIONS];
     
-    int mCellType;
+    int mAction;
     int mParam;
     int mPhase;
     int mInactiveCount;

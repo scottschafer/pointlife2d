@@ -17,7 +17,7 @@ void Cell::randomize() {
  
     mPhase = Random::randRange(10, 200);
     mStrength = Random::randRange(NUMBER(.5), NUMBER(2.0));
-    mCellType = Random::randRange(0,20);
+    mAction = Random::randRange(0,20);
     
     for (int i = 0; i < MAX_CONNECTIONS; i++) {
         mMaxConnectionLength[i] = Random::randRange(NUMBER(CELL_SIZE), NUMBER(CELL_SIZE*2.0));
@@ -40,7 +40,7 @@ void Cell :: reset() {
     
     mContractTurnCount = 0;
     mNumSecondaryConnections = 0;
-    mCellType = 0;
+    mAction = 0;
     mInitialEnergy = mEnergy = 0;
     mVelocity.x = mVelocity.y = 0;
     mOnBoard = false;

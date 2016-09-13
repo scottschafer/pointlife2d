@@ -9,8 +9,6 @@
 /* Begin PBXBuildFile section */
 		522D87D21B3C509B00518DE2 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 522D87D11B3C509B00518DE2 /* main.cpp */; };
 		523C3A231B548EC70078D2CF /* Organism.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 523C3A211B548EC70078D2CF /* Organism.cpp */; };
-		52435B621B7AC3DD00F2519F /* Makefile in Sources */ = {isa = PBXBuildFile; fileRef = 52435B611B7AC3DD00F2519F /* Makefile */; };
-		52435B651B7AD4D900F2519F /* CartesianCreatureConstructor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 52435B631B7AD4D900F2519F /* CartesianCreatureConstructor.cpp */; };
 		52BEBDA41B42224200727AFE /* Genome.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 52BEBDA21B42224200727AFE /* Genome.cpp */; };
 		52C622071B4AC37400A63DBE /* globals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 52C622051B4AC37400A63DBE /* globals.cpp */; };
 		52C6220A1B4ACF5C00A63DBE /* CreatureConstructor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 52C622081B4ACF5C00A63DBE /* CreatureConstructor.cpp */; };
@@ -33,30 +31,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
-		52435B581B7ABFE300F2519F /* CopyFiles */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		521456DD1B7C5C0300843C6B /* glm */ = {isa = PBXFileReference; lastKnownFileType = folder; path = glm; sourceTree = "<group>"; };
-		521456DE1B7C603D00843C6B /* oldmains */ = {isa = PBXFileReference; lastKnownFileType = folder; path = oldmains; sourceTree = SOURCE_ROOT; };
 		521EBDB41B7428A800FB75D6 /* CellTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CellTypes.h; sourceTree = "<group>"; };
 		522D87CE1B3C509B00518DE2 /* PointLifeCpp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = PointLifeCpp; sourceTree = BUILT_PRODUCTS_DIR; };
 		522D87D11B3C509B00518DE2 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		523C3A211B548EC70078D2CF /* Organism.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Organism.cpp; sourceTree = "<group>"; };
 		523C3A221B548EC70078D2CF /* Organism.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Organism.h; sourceTree = "<group>"; };
-		52435B5A1B7ABFE300F2519F /* PointLifeEmscript */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = PointLifeEmscript; sourceTree = BUILT_PRODUCTS_DIR; };
-		52435B611B7AC3DD00F2519F /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = SOURCE_ROOT; usesTabs = 1; };
-		52435B631B7AD4D900F2519F /* CartesianCreatureConstructor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CartesianCreatureConstructor.cpp; sourceTree = "<group>"; };
-		52435B641B7AD4D900F2519F /* CartesianCreatureConstructor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CartesianCreatureConstructor.h; sourceTree = "<group>"; };
-		52435B661B7B9A2500F2519F /* Makefile2 */ = {isa = PBXFileReference; lastKnownFileType = text; path = Makefile2; sourceTree = SOURCE_ROOT; };
 		52BEBDA21B42224200727AFE /* Genome.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Genome.cpp; sourceTree = "<group>"; };
 		52BEBDA31B42224200727AFE /* Genome.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Genome.h; sourceTree = "<group>"; };
 		52C622051B4AC37400A63DBE /* globals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = globals.cpp; sourceTree = "<group>"; };
@@ -89,13 +71,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		52435B571B7ABFE300F2519F /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -111,7 +86,6 @@
 			isa = PBXGroup;
 			children = (
 				522D87CE1B3C509B00518DE2 /* PointLifeCpp */,
-				52435B5A1B7ABFE300F2519F /* PointLifeEmscript */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -119,10 +93,6 @@
 		522D87D01B3C509B00518DE2 /* PointLifeCpp */ = {
 			isa = PBXGroup;
 			children = (
-				521456DE1B7C603D00843C6B /* oldmains */,
-				521456DD1B7C5C0300843C6B /* glm */,
-				52435B661B7B9A2500F2519F /* Makefile2 */,
-				52435B611B7AC3DD00F2519F /* Makefile */,
 				52C96BA71B3C54E900011C42 /* GLUT.framework */,
 				52C96BA81B3C54E900011C42 /* OpenGL.framework */,
 				522D87D11B3C509B00518DE2 /* main.cpp */,
@@ -147,8 +117,6 @@
 				523C3A211B548EC70078D2CF /* Organism.cpp */,
 				523C3A221B548EC70078D2CF /* Organism.h */,
 				521EBDB41B7428A800FB75D6 /* CellTypes.h */,
-				52435B631B7AD4D900F2519F /* CartesianCreatureConstructor.cpp */,
-				52435B641B7AD4D900F2519F /* CartesianCreatureConstructor.h */,
 			);
 			path = PointLifeCpp;
 			sourceTree = "<group>";
@@ -173,23 +141,6 @@
 			productReference = 522D87CE1B3C509B00518DE2 /* PointLifeCpp */;
 			productType = "com.apple.product-type.tool";
 		};
-		52435B591B7ABFE300F2519F /* PointLifeEmscript */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 52435B601B7ABFE300F2519F /* Build configuration list for PBXNativeTarget "PointLifeEmscript" */;
-			buildPhases = (
-				52435B561B7ABFE300F2519F /* Sources */,
-				52435B571B7ABFE300F2519F /* Frameworks */,
-				52435B581B7ABFE300F2519F /* CopyFiles */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = PointLifeEmscript;
-			productName = PointLifeEmscript;
-			productReference = 52435B5A1B7ABFE300F2519F /* PointLifeEmscript */;
-			productType = "com.apple.product-type.tool";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -201,9 +152,6 @@
 				TargetAttributes = {
 					522D87CD1B3C509B00518DE2 = {
 						CreatedOnToolsVersion = 6.3.2;
-					};
-					52435B591B7ABFE300F2519F = {
-						CreatedOnToolsVersion = 6.4;
 					};
 				};
 			};
@@ -220,7 +168,6 @@
 			projectRoot = "";
 			targets = (
 				522D87CD1B3C509B00518DE2 /* PointLifeCpp */,
-				52435B591B7ABFE300F2519F /* PointLifeEmscript */,
 			);
 		};
 /* End PBXProject section */
@@ -233,22 +180,13 @@
 				52C6220A1B4ACF5C00A63DBE /* CreatureConstructor.cpp in Sources */,
 				52C622071B4AC37400A63DBE /* globals.cpp in Sources */,
 				52C96BBA1B3CCB0600011C42 /* WorldThreadRunner.cpp in Sources */,
-				52435B621B7AC3DD00F2519F /* Makefile in Sources */,
 				52C96BB61B3C961200011C42 /* Random.cpp in Sources */,
 				522D87D21B3C509B00518DE2 /* main.cpp in Sources */,
 				523C3A231B548EC70078D2CF /* Organism.cpp in Sources */,
 				52E60A7E1B4370710053962B /* Cell.cpp in Sources */,
-				52435B651B7AD4D900F2519F /* CartesianCreatureConstructor.cpp in Sources */,
 				52C96BB11B3C5BE500011C42 /* WorldSpace.cpp in Sources */,
 				52BEBDA41B42224200727AFE /* Genome.cpp in Sources */,
 				52C96BB31B3C5E0900011C42 /* World.cpp in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		52435B561B7ABFE300F2519F /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -346,26 +284,6 @@
 			};
 			name = Release;
 		};
-		52435B5E1B7ABFE300F2519F /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GCC_VERSION = "/Users/scottsse/emsdk_portable/emscripten/tag-1.34.4/emcc";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Debug;
-		};
-		52435B5F1B7ABFE300F2519F /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				GCC_VERSION = "/Users/scottsse/emsdk_portable/emscripten/tag-1.34.4/emcc";
-				PRODUCT_NAME = "$(TARGET_NAME)";
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -383,15 +301,6 @@
 			buildConfigurations = (
 				522D87D61B3C509B00518DE2 /* Debug */,
 				522D87D71B3C509B00518DE2 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		52435B601B7ABFE300F2519F /* Build configuration list for PBXNativeTarget "PointLifeEmscript" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				52435B5E1B7ABFE300F2519F /* Debug */,
-				52435B5F1B7ABFE300F2519F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

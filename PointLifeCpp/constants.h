@@ -12,7 +12,7 @@
 #define PointLifeCpp_constants_h
 
 #define BATCH_MOVE_POINTS 0
-#define USE_SIMULATION_THREAD 0
+#define USE_SIMULATION_THREAD 1
 
 #define WORLD_DIM 500
 #define MAX_COORD (WORLD_DIM-1)
@@ -36,10 +36,7 @@
     #define SQRT(x) (sqrt(x))
 #endif
 
-#ifndef NULL
 #define NULL 0
-#endif
-
 #define MAX_CONNECTIONS 6
 
 #define GENOME_LENGTH 512
