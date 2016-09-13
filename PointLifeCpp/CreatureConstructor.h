@@ -34,10 +34,12 @@ public:
     void addCell(int cellType, NUMBER x, NUMBER y);
     
     
-    void processGenome(int genomeIndex, int iCellA = 0, int iCellB = 0, int level = 0, int maxLevel = 50,
+    void processGenome(int genomeIndex, int iCellA = 0, int iCellB = 0, int level = 0, int maxLevel = 0,
                        NUMBER elasticity = 0);
     
-    void go();
+    bool go(NUMBER x = -1, NUMBER y = -1);
+    void deleteAddedCells();
+    
     void go(Cell * pFromCell);
     
     void go(Cell * pFromCell, NUMBER angle);
@@ -45,11 +47,12 @@ public:
     void connectCell(Cell *pFrom, Cell *pTo, int portIndex);
     
 private:
-    void finalize();
+    bool finalize();
     
 private:
     World & mWorld;
     Genome & mGenome;
+    NUMBER mOffsetX, mOffsetY;
     int mNumCells;
     int mIndex;
     int mTurns;

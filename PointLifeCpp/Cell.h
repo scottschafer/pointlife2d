@@ -44,14 +44,20 @@ public:
     Point mSavePos;
     Point mVelocity;
 
+    Cell *mEntityHead;
+    int mEntityIndex;
+    int mEntityCount;
+    
     bool mActivated;
     bool mOnBoard;
     
     Cell *mPrev, *mNext;
-
+    
+    Cell *mClockwise;
     double mEnergy;
+    double mElasticity;
 
-    int mIndex, mEntityIndex;
+    int mIndex;
     int mGeneration;
     int mNumConnections;
     int mNumSecondaryConnections;
@@ -68,9 +74,13 @@ public:
     Genome * mGenome;
     bool mOwnsConnection[MAX_CONNECTIONS];
     
-    int mAction;
+    int mCellType;
+    int mParam;
     int mPhase;
+    int mInactiveCount;
+    int mDefaultPhase;
     NUMBER mStrength;
+    NUMBER mInitialEnergy;
 
     int mLastCollision;
     int mLastFlagellum;
@@ -89,7 +99,14 @@ public:
     
     void reset();
     
-    void connect(Cell * toCell, NUMBER maxConnectionLength = CELL_SIZE, int connectionProperty = 0) {
+    void connect(Cell * toCell, NUMBER maxConnectionLength = CELL_SIZE, int connectionProperty = -1) {
+        
+        /*
+        NUMBER dist = mPos.distance(toCell->mPos);
+        if (dist > maxConnectionLength) {
+            return;
+        }
+         */
         
         if (toCell == this) {
             return;

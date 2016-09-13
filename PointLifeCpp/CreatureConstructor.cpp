@@ -7,34 +7,33 @@
 //
 
 #include "CreatureConstructor.h"
+#include "Globals.h"
 #include <set>
 
-#define MAX_CELLS 500
+#define MAX_CELLS 100
 #define MAX_TURNS 5000
 
-BYTE cellType;
-double elasticity;
-int maxConnections = MAX_CONNECTIONS;
-bool flagellum = false;
+#define DEFAULT_MAX_LEVEL 20
+
 
 inline double angle2Radians(double angle) { return angle * 6.28318530717959 / 360.0; }
 
 CreatureConstructor :: CreatureConstructor(World & world, Genome & genome) : mWorld(world), mGenome(genome) {
     mIndex = 0;
     mNumCells = 0;
-    cellType = 0;
-    elasticity = 1;
-    maxConnections = 3;
+
     mTurns = 0;
     mAngle = 0;
     mEntityIndex = -1;
+    
+    mOffsetX = mOffsetY = 0;
 }
 
 Cell * CreatureConstructor :: addCell(NUMBER x, NUMBER y) {
 
     WorldSpace &wp = mWorld.getWorldSpace();
     
-    NUMBER minDist = CELL_SIZE * .97;
+    NUMBER minDist = CELL_SIZE * .99;
 
     CellPtr buffer[16];
     int numCollisions = wp.getNearbyCells(Point(x, y), minDist, buffer);
@@ -42,20 +41,29 @@ Cell * CreatureConstructor :: addCell(NUMBER x, NUMBER y) {
         return NULL;
     }
     
-    if (mNumCells > MAX_CELLS) {
+    if (mAddedCells.size() > MAX_CELLS) {
         return NULL;
     }
 
     Cell * pResult = mWorld.addCell(x, y);
     if (pResult) {
+        pResult->mGenome = &mGenome;
+        mAddedCells.push_back(pResult);
         if (mEntityIndex == -1) {
             mEntityIndex = pResult->mEntityIndex;
         }
         else {
             pResult->mEntityIndex = mEntityIndex;
         }
+        pResult->mEntityHead = &mWorld.mCells[mEntityIndex];
+        
+        pResult->mEntityHead->mEnergy += BASE_ENERGY_PER_CELL;
+        if (pResult->mNumConnections == 0) {
+            pResult->mEnergy *= 5.0;
+        }
         ++ mNumCells;
     }
+
     return pResult;
 }
 
@@ -65,18 +73,16 @@ Cell * CreatureConstructor :: addCell(BYTE g, NUMBER x, NUMBER y) {
     if (pResult) {
         BYTE instruction = (g >> 4);
         BYTE param = (g & 15);
+        pResult->mParam = param;
         
-        pResult->mAction = instruction & 7;
-        switch (pResult->mAction) {
+        pResult->mCellType = instruction & 3;
+        pResult->mPhase = 10;//param + 1;
+        switch (pResult->mCellType) {
             case actionFlagellum:
-            case actionBite:
-                break;
-                
-            default:
-                pResult->mAction = 0;
+            case actionContract:
+                pResult->mPhase = (param < 7) ? (10 + param * 10) : 10000;
                 break;
         }
-        pResult->mPhase = 10;//param + 1;
         pResult->mNumAllowableConnections = MAX_CONNECTIONS;
     }
     return pResult;
@@ -88,6 +94,11 @@ bool addCellBasedOnType(BYTE g) {
 
 void CreatureConstructor :: processGenome(int genomeIndex, int iCellA, int iCellB, int level, int maxLevel,
                                           NUMBER elasticity) {
+    
+    if (maxLevel == 0) {
+        maxLevel = DEFAULT_MAX_LEVEL;
+    }
+    
     if (++level > maxLevel) return;
     
     if (++mTurns > 1000) {
@@ -101,7 +112,7 @@ void CreatureConstructor :: processGenome(int genomeIndex, int iCellA, int iCell
     CellPtr buffer[16];
     WorldSpace &wp = mWorld.getWorldSpace();
     
-    NUMBER dist = CELL_SIZE;// * 1.1;//1.1;
+    NUMBER dist = (1.0 + elasticity) * CELL_SIZE / 2.0;
     
     BYTE * genome = mGenome.genome;
 
@@ -110,7 +121,8 @@ void CreatureConstructor :: processGenome(int genomeIndex, int iCellA, int iCell
         NUMBER c = NUMBER(WORLD_DIM/2);
         NUMBER a = 0;
 
-        NUMBER x = c, y = c;
+        NUMBER x = mOffsetX;// c;
+        NUMBER y = (Globals :: gravity) ? NUMBER(WORLD_DIM*.07) : mOffsetY;
         
         Cell * pCellA = addCell(genome[genomeIndex++], x, y);
         
@@ -124,15 +136,26 @@ void CreatureConstructor :: processGenome(int genomeIndex, int iCellA, int iCell
         
         Cell * pCellC = addCell(genome[genomeIndex++], x, y);
         
+        if (! pCellA || ! pCellB || ! pCellC) {
+            return;
+        }
         //.....
 
         pCellA->connect(pCellB, dist, genome[genomeIndex++]);
         pCellB->connect(pCellC, dist, genome[genomeIndex++]);
         pCellC->connect(pCellA, dist, genome[genomeIndex++]);
         
-        processGenome(genomeIndex++, 0, 1, level, maxLevel);
-        processGenome(genomeIndex++, 1, 2, level, maxLevel);
-        processGenome(genomeIndex++, 2, 0, level, maxLevel);
+        pCellA->mClockwise = pCellB;
+        pCellB->mClockwise = pCellC;
+        pCellC->mClockwise = pCellA;
+        
+
+        int ai = pCellA->mIndex;
+        int bi = pCellB->mIndex;
+        int ci = pCellC->mIndex;
+        processGenome(genomeIndex++, ai, bi, level, maxLevel);
+        processGenome(genomeIndex++, bi, ci, level, maxLevel);
+        processGenome(genomeIndex++, ci, ai, level, maxLevel);
     }
     else {
         BYTE g = genome[(genomeIndex++) % GENOME_LENGTH];
@@ -141,18 +164,31 @@ void CreatureConstructor :: processGenome(int genomeIndex, int iCellA, int iCell
 
         switch (instruction) {
             case 15: {
-                int newIndex = (genomeIndex - param * 2 + GENOME_LENGTH) % GENOME_LENGTH;
+                int newIndex = (genomeIndex - param * 5 + GENOME_LENGTH) % GENOME_LENGTH;
                 processGenome(newIndex, iCellA, iCellB, level, maxLevel, elasticity);
                 break;
             }
             case 14: {
-                maxLevel = 20 + param * 5;
+                maxLevel = DEFAULT_MAX_LEVEL + param * 3;
+                processGenome(genomeIndex, iCellA, iCellB, level, maxLevel, elasticity);
                 break;
             }
                 
-            case 12:
             case 13:
-                elasticity = 1.0 + NUMBER(param) / 63.0;
+                elasticity = 1.0 + NUMBER(param) / 31.0;
+                processGenome(genomeIndex, iCellA, iCellB, level, maxLevel, elasticity);
+                break;
+
+                /*
+            case 12:
+            case 11:
+            case 10:
+                break;
+                
+            case 9:
+                if (param > 10)
+                return;
+                 */
                 
             default: {
                 Cell & a = mWorld.mCells[iCellA];
@@ -161,40 +197,66 @@ void CreatureConstructor :: processGenome(int genomeIndex, int iCellA, int iCell
                 NUMBER dx = b.mPos.x - a.mPos.x;
                 NUMBER dy = b.mPos.y - a.mPos.y;
                 
+                NUMBER dist = SQRT(dx*dx+dy*dy);
+                
                 NUMBER cx = (a.mPos.x + b.mPos.x) / 2.0;
                 NUMBER cy = (a.mPos.y + b.mPos.y) / 2.0;
                 
                 Point normal(-dy, dx);
                 
-                NUMBER scale = dist / normal.distance();
+                NUMBER h = (dist * sqrt(3.0) / 2.0);
+                NUMBER scale = h / normal.distance();
                 
-                Cell * pCellC = addCell(g, cx + normal.x * scale, cy + normal.y * scale);
-                if (pCellC) {
-                    a.connect(pCellC, CELL_SIZE * elasticity, genome[(genomeIndex++) % GENOME_LENGTH]);
-                    b.connect(pCellC, CELL_SIZE * elasticity, genome[(genomeIndex++) % GENOME_LENGTH]);
+                Point newPos(cx + normal.x * scale, cy + normal.y * scale);
+                NUMBER distA = newPos.distance(a.mPos);
+                NUMBER distB = newPos.distance(b.mPos);
 
-                    int index = mNumCells - 1;
-                    processGenome(genomeIndex++, iCellA, index, level, maxLevel, elasticity);
-                    processGenome(genomeIndex++, index, iCellB, level, maxLevel, elasticity);
+                NUMBER maxDist = CELL_SIZE * elasticity;
+                
+                if (distA <= maxDist && distB <= maxDist) {
+                    
+                    Cell * pCellC = addCell(g, newPos.x, newPos.y);
+                    if (pCellC) {
+                        int c1 = genome[(genomeIndex++) % GENOME_LENGTH];
+                        int c2 = genome[(genomeIndex++) % GENOME_LENGTH];
+                        
+                        a.connect(pCellC, maxDist, c1);
+                        pCellC->connect(&b, maxDist, c2);
+
+                        int iCellC = pCellC->mIndex;
+                        processGenome(genomeIndex++, iCellA, iCellC, level, maxLevel, elasticity);
+                        processGenome(genomeIndex++, iCellC, iCellB, level, maxLevel, elasticity);
+
+                        pCellC->mClockwise = &b;
+                    
+                    }
                 }
             }
         }
     }
 }
 
-void CreatureConstructor::go() {
+bool CreatureConstructor::go(NUMBER x, NUMBER y) {
     
-#if 0
+    if (x == -1) {
+        x = WORLD_DIM / 2;
+    }
     
-    createCell(0, 0, WORLD_DIM/2, WORLD_DIM/2);
-
-    finalize();
-#else
-    
+    if (y == -1) {
+        y = WORLD_DIM / 2;
+    }
+    mOffsetX = x;
+    mOffsetY = y;
     processGenome(0);
-    finalize();
-//    processGenome(int genomeIndex, NUMBER angle, NUMBER x, NUMBER y, int level
-#endif
+    return finalize();
+}
+
+void CreatureConstructor :: deleteAddedCells() {
+    for (int i = 0; i < mAddedCells.size(); i++) {
+        Cell * pCell = mAddedCells[i];
+        mWorld.removeCell(pCell);
+    }
+    mAddedCells.clear();
 }
 
 Cell * CreatureConstructor :: createCell(int genomeIndex, NUMBER angle, NUMBER x, NUMBER y, int level) {
@@ -226,19 +288,20 @@ Cell * CreatureConstructor :: createCell(int genomeIndex, NUMBER angle, NUMBER x
     BYTE instruction = (g >> 4);
     BYTE param = (g & 15);
     
-    cell.mAction = instruction & 3;
-    cell.mPhase = 10;//param + 1;
-    if (cell.mAction == actionFlagellum) {
-        cell.mPhase = 10;//(param < 7) ? 10 : 10000;
+    cell.mCellType = instruction & 3;
+    cell.mPhase = param * 5 + 1;
+    if (cell.mCellType == actionFlagellum) {
+        if ( param < 7) {
+            cell.mPhase = 1000;
+         }
     }
     double elasticity = 1;
 
     for (int i = 0; cell.mNumConnections < (MAX_CONNECTIONS-1) && i < MAX_CONNECTIONS; ) {
 
-        if (++mTurns > 1000) {
+        if (++mTurns > 10000) {
             return pResult;
         }
-        
 
         BYTE g = mGenome.genome[(genomeIndex++) % GENOME_LENGTH];
         BYTE instruction = (g >> 4);
@@ -266,7 +329,7 @@ Cell * CreatureConstructor :: createCell(int genomeIndex, NUMBER angle, NUMBER x
                 break;
                 int numNearby = wp.getNearbyCells(Point(x, y), dist, buffer);
                 for (int j = 0; j < numNearby; j++) {
-                    if (buffer[j]->mEntityIndex == mEntityIndex && (buffer[j]->mAction & 3) == (param & 3)) {
+                    if (buffer[j]->mEntityIndex == mEntityIndex && (buffer[j]->mCellType & 3) == (param & 3)) {
                         pConnectWithCell = buffer[j];
                         break;
                     }
@@ -316,18 +379,41 @@ void addCellsToSet(Cell *pCell, std::set<Cell*> & cellSet) {
     }
 }
 
-void CreatureConstructor::finalize() {
+bool CreatureConstructor :: finalize() {
+    
+    if (mAddedCells.size() < 3 )
+        return false;
+    
+    int actioncount = 0;
     
     for (int i = 0; i < mAddedCells.size(); i++) {
         Cell * pCell = mAddedCells[i];
-        if (pCell->mNumAllConnections > 3) {
-            pCell->mAction = 0;
+        
+        if (pCell->mNumAllConnections > 2) {
+            pCell->mCellType = 0;
         }
         
-        if (pCell->mAction == actionLook)
-            pCell->mAction = 0;
+        pCell->mInitialEnergy = pCell->mEnergy;
+        
+        pCell->mDefaultPhase = pCell->mPhase;
+        
+        switch (pCell->mCellType) {
+            case actionBite:
+            case actionContract:
+            case actionFlagellum:
+                ++actioncount;
+        }
     }
-        return;
+    
+    if (actioncount == 0) {
+        for (int i = 0; i < mAddedCells.size(); i++) {
+            Cell * pCell = mAddedCells[i];
+            pCell->mCellType = 0;
+        }
+        return false;
+    }
+
+        return true;
     CellPtr buffer[16];
     
     std::vector<CellPtr*> preservedCells;
@@ -501,7 +587,7 @@ void CreatureConstructor :: go(Cell * pFromCell, NUMBER angle) {
                     pNewCell->mMaxConnectionLength[i] = elasticity * CELL_SIZE;
                 }
                 
-                pNewCell->mAction = param;
+                pNewCell->mCellType = param;
                 pNewCell->mPhase = 10;
                 
                 if (pFromCell) {
@@ -625,7 +711,7 @@ void CreatureConstructor :: go(Cell * pFromCell, NUMBER angle) {
                     pNewCell->mMaxConnectionLength[i] = elasticity * CELL_SIZE;
                 }
                 
-                pNewCell->mAction = param;
+                pNewCell->mCellType = param;
                 pNewCell->mPhase = 10;
 
                 if (pFromCell) {

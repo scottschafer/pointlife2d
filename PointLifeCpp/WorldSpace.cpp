@@ -176,12 +176,15 @@ int WorldSpace::getNearbyCells(Point pt, NUMBER distance, CellPtr *pResultArray,
 int WorldSpace :: getNearbyCells(int excludeGeneration, Point pt, NUMBER distance, CellPtr *pResultArray, int maxResults) {
     int result = 0;
     
-    // detemine the square to search
+    // determine the square to search
     
     int fX = (int) MAX(pt.x - distance, 0);
     int tX = (int) MIN(pt.x + distance, MAX_COORD);
     int fY = (int) MAX(pt.y - distance, 0);
     int tY = (int) MIN(pt.y + distance, MAX_COORD);
+    
+//    fX = tX = int(pt.x);
+//    fY = tY = int(pt.y);
     
     distance *= distance;
     

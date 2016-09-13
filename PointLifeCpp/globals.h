@@ -14,7 +14,10 @@
 class Globals {
 public:
     static bool inFitnessTest;
+    static bool gravity;
+    static bool pause;
     static double magnification;
     static int minMsPerTurn;
+    static int mFocusCritter;
 };
 #endif /* defined(__PointLifeCpp__globals__) */

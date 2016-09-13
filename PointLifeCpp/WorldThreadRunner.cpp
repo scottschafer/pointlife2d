@@ -6,29 +6,31 @@
 //  Copyright (c) 2015 Scott SSE. All rights reserved.
 //
 
-
 #include "WorldThreadRunner.h"
 #include "World.h"
 #include "Globals.h"
 #include <pthread.h>
 #include <unistd.h>
-#include <GLUT/glut.h>
 
 World WorldThreadRunner :: mWorld;
 
 static bool isPaused = false;
 static bool alive = false;
 
+#if USE_SIMULATION_THREAD
 static pthread_t worldThread;
+#endif
 
 void WorldThreadRunner :: start() {
 
     alive = true;
+#if USE_SIMULATION_THREAD
     if(pthread_create(&worldThread, NULL, &WorldThreadRunner::threadFunc, NULL)) {
         
         fprintf(stderr, "Error creating thread\n");
         exit();
     }
+#endif
 }
 
 
@@ -70,8 +72,9 @@ void * WorldThreadRunner :: threadFunc(void*) {
     return NULL;
 }
 
-
+#if USE_SIMULATION_THREAD
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 WorldThreadMutex::WorldThreadMutex() {
 #if USE_SIMULATION_THREAD

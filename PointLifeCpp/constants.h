@@ -6,23 +6,27 @@
 //  Copyright (c) 2015 Scott SSE. All rights reserved.
 //
 
+#include "CellTypes.h"
+
 #ifndef PointLifeCpp_constants_h
 #define PointLifeCpp_constants_h
 
 #define BATCH_MOVE_POINTS 0
-#define USE_SIMULATION_THREAD 1
+#define USE_SIMULATION_THREAD 0
 
 #define WORLD_DIM 500
 #define MAX_COORD (WORLD_DIM-1)
-#define NUM_CELLS 5000
+#define NUM_CELLS 10000
+
+#define BASE_ENERGY_PER_CELL 3
 
 #define NUM_GENOMES_TO_TEST 100
 #define NUM_GENOMES_TO_KEEP (NUM_GENOMES_TO_TEST/5)
-#define NUM_TURNS_PER_GENOME 700
+#define NUM_TURNS_PER_GENOME 1500
 #define NUM_MUTATIONS (NUM_GENOMES_TO_TEST)
 
 #define USE_FLOAT 0
-#define USE_FAST_DISTANCE 1
+#define USE_FAST_DISTANCE 0
 
 #if USE_FLOAT
     #define NUMBER float
@@ -32,12 +36,15 @@
     #define SQRT(x) (sqrt(x))
 #endif
 
+#ifndef NULL
 #define NULL 0
+#endif
+
 #define MAX_CONNECTIONS 6
 
-#define GENOME_LENGTH 1024
+#define GENOME_LENGTH 512
 
-#define CELL_SIZE MIN(10,(5*NUMBER(WORLD_DIM)/NUMBER(NUM_CELLS)))
+#define CELL_SIZE MIN(10,(15*NUMBER(WORLD_DIM)/NUMBER(NUM_CELLS)))
 #define INITIAL_VELOCITY (CELL_SIZE/4.0)
 
 inline NUMBER MAX(NUMBER x, NUMBER y) { return (x>y) ? x : y; }

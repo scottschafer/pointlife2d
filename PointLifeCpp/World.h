@@ -26,15 +26,23 @@ public:
     
     double testGenome(Genome & genome);
     
-    Cell * addCell(NUMBER x, NUMBER y);
+    Cell * addCell(NUMBER x, NUMBER y, NUMBER minDistTest = 0);
+    void removeCell(Cell *pCell);
+    void killEntity(Cell *pCell);
+    
+    Genome * getTopGenome();
+    void generateNewEntity(Genome);
     
     int getGeneration();
     int getTestIndex();
     
+    int getTurn() { return mWorldTurn; }
+    int getNumEntities() { return mNumEntities; }
     WorldSpace & getWorldSpace() { return mWorldSpace; }
     
 private:
-    void applyPointPhysicsAndConnections(NUMBER fraction = 1.0);
+    int getEntityLength(Cell *pCell);
+    
     void applyPointPhysics(NUMBER fraction = 1.0);
     void applyConnectionPhysics(NUMBER fraction = 1.0);
     void detectCollisions(NUMBER fraction = 1.0);
@@ -45,6 +53,8 @@ private:
 
     void sendSignal(Cell * pCell, int signal, int level = 0);
     WorldSpace mWorldSpace;
+    
+    void spawn();
 
 private:
     double calcFitness();
@@ -55,11 +65,15 @@ public:
     Cell * mCells;
     Genome * mGenomes;
     int mNumCells;
+    int mNumEntities;
+
     
     bool mInFitnessTest;
     int mFitnessGeneration;
     int mFitnessTestIndex;
     int mFitnessTestTurn;
+    
+    int mWorldTurn;
 };
 
 #endif
