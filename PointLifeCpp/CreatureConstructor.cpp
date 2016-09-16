@@ -21,7 +21,21 @@ inline double angle2Radians(double angle) { return angle * 6.28318530717959 / 36
 CreatureConstructor :: CreatureConstructor(World & world, Genome & genome) : mWorld(world), mGenome(genome) {
     mIndex = 0;
     mNumCells = 0;
+    
+    mTurns = 0;
+    mAngle = 0;
+    mEntityIndex = -1;
+    
+    mOffsetX = mOffsetY = 0;
+    mAsciArt = 0;
+}
 
+CreatureConstructor :: CreatureConstructor(World & world, const char ** asciArt) :
+mWorld(world), mAsciArt(asciArt), mGenome(* new Genome()) {
+    mIndex = 0;
+    mNumCells = 0;
+    mGenome.randomize();
+    
     mTurns = 0;
     mAngle = 0;
     mEntityIndex = -1;
@@ -30,11 +44,11 @@ CreatureConstructor :: CreatureConstructor(World & world, Genome & genome) : mWo
 }
 
 Cell * CreatureConstructor :: addCell(NUMBER x, NUMBER y) {
-
+    
     WorldSpace &wp = mWorld.getWorldSpace();
     
     NUMBER minDist = CELL_SIZE * .99;
-
+    
     CellPtr buffer[16];
     int numCollisions = wp.getNearbyCells(Point(x, y), minDist, buffer);
     if (numCollisions > 0) {
@@ -44,7 +58,7 @@ Cell * CreatureConstructor :: addCell(NUMBER x, NUMBER y) {
     if (mAddedCells.size() > MAX_CELLS) {
         return NULL;
     }
-
+    
     Cell * pResult = mWorld.addCell(x, y);
     if (pResult) {
         pResult->mGenome = &mGenome;
@@ -63,7 +77,7 @@ Cell * CreatureConstructor :: addCell(NUMBER x, NUMBER y) {
         }
         ++ mNumCells;
     }
-
+    
     return pResult;
 }
 
@@ -76,10 +90,10 @@ Cell * CreatureConstructor :: addCell(BYTE g, NUMBER x, NUMBER y) {
         pResult->mParam = param;
         
         pResult->mAction = instruction & 3;
-        pResult->mPhase = 10;//param + 1;
+        pResult->mActionFrequency = 10;//param + 1;
         switch (pResult->mAction) {
             case actionFlagellum:
-                pResult->mPhase = (param < 7) ? (10 + param * 10) : 10000;
+                pResult->mActionFrequency = (param < 7) ? (10 + param * 10) : 10000;
                 break;
         }
         pResult->mNumAllowableConnections = MAX_CONNECTIONS;
@@ -114,12 +128,12 @@ void CreatureConstructor :: processGenome(int genomeIndex, int iCellA, int iCell
     NUMBER dist = (1.0 + elasticity) * CELL_SIZE / 2.0;
     
     BYTE * genome = mGenome.genome;
-
+    
     if (iCellA == iCellB) {
         NUMBER r = dist / 2.0;
         NUMBER c = NUMBER(WORLD_DIM/2);
         NUMBER a = 0;
-
+        
         NUMBER x = mOffsetX;// c;
         NUMBER y = (Globals :: gravity) ? NUMBER(WORLD_DIM*.07) : mOffsetY;
         
@@ -139,7 +153,7 @@ void CreatureConstructor :: processGenome(int genomeIndex, int iCellA, int iCell
             return;
         }
         //.....
-
+        
         pCellA->connect(pCellB, dist, genome[genomeIndex++]);
         pCellB->connect(pCellC, dist, genome[genomeIndex++]);
         pCellC->connect(pCellA, dist, genome[genomeIndex++]);
@@ -148,7 +162,7 @@ void CreatureConstructor :: processGenome(int genomeIndex, int iCellA, int iCell
         pCellB->mClockwise = pCellC;
         pCellC->mClockwise = pCellA;
         
-
+        
         int ai = pCellA->mIndex;
         int bi = pCellB->mIndex;
         int ci = pCellC->mIndex;
@@ -160,7 +174,7 @@ void CreatureConstructor :: processGenome(int genomeIndex, int iCellA, int iCell
         BYTE g = genome[(genomeIndex++) % GENOME_LENGTH];
         BYTE instruction = (g >> 4);
         BYTE param = (g & 15);
-
+        
         switch (instruction) {
             case 15: {
                 int newIndex = (genomeIndex - param * 5 + GENOME_LENGTH) % GENOME_LENGTH;
@@ -177,16 +191,16 @@ void CreatureConstructor :: processGenome(int genomeIndex, int iCellA, int iCell
                 elasticity = 1.0 + NUMBER(param) / 31.0;
                 processGenome(genomeIndex, iCellA, iCellB, level, maxLevel, elasticity);
                 break;
-
-                /*
-            case 12:
-            case 11:
-            case 10:
-                break;
                 
-            case 9:
-                if (param > 10)
-                return;
+                /*
+                 case 12:
+                 case 11:
+                 case 10:
+                 break;
+                 
+                 case 9:
+                 if (param > 10)
+                 return;
                  */
                 
             default: {
@@ -209,7 +223,7 @@ void CreatureConstructor :: processGenome(int genomeIndex, int iCellA, int iCell
                 Point newPos(cx + normal.x * scale, cy + normal.y * scale);
                 NUMBER distA = newPos.distance(a.mPos);
                 NUMBER distB = newPos.distance(b.mPos);
-
+                
                 NUMBER maxDist = CELL_SIZE * elasticity;
                 
                 if (distA <= maxDist && distB <= maxDist) {
@@ -221,13 +235,13 @@ void CreatureConstructor :: processGenome(int genomeIndex, int iCellA, int iCell
                         
                         a.connect(pCellC, maxDist, c1);
                         pCellC->connect(&b, maxDist, c2);
-
+                        
                         int iCellC = pCellC->mIndex;
                         processGenome(genomeIndex++, iCellA, iCellC, level, maxLevel, elasticity);
                         processGenome(genomeIndex++, iCellC, iCellB, level, maxLevel, elasticity);
-
+                        
                         pCellC->mClockwise = &b;
-                    
+                        
                     }
                 }
             }
@@ -246,8 +260,123 @@ bool CreatureConstructor::go(NUMBER x, NUMBER y) {
     }
     mOffsetX = x;
     mOffsetY = y;
-    processGenome(0);
+    if (mAsciArt) {
+        processAsciArt();
+    }
+    else {
+        processGenome(0);
+    }
+    
     return finalize();
+}
+
+void CreatureConstructor::processAsciArt() {
+    NUMBER y = 0;
+    NUMBER x = 0;
+    int iRow = 0;
+    
+    x += 20;
+    y += 20;
+    
+    NUMBER cellDist = CELL_SIZE * 1.15;
+    
+    // determine the distance between rows
+    //  a*a + b*b = c*c
+    //
+    //  a = row height
+    //  b = cellDist / 2
+    //  c = cellDist
+    // so:
+    //
+    //  a*a + cellDist*cellDist / 4 = cellDist * cellDist
+    // a = sqrt(cellDist * cellDist - cellDist*cellDist / 4);
+    
+    NUMBER rowHeight = sqrt(cellDist * cellDist - cellDist / 4);
+    
+    while (mAsciArt[iRow]) {
+        y += rowHeight;
+        ++iRow;
+    }
+    
+    iRow = 0;
+    
+    while (mAsciArt[iRow]) {
+        const char *rowData = mAsciArt[iRow];
+        if (iRow & 1) {
+            ++rowData; // odd rows ignore the first character
+            x = 20 + cellDist / 2;
+        }
+        else {
+            x = 20;
+        }
+        
+        int rowLength = strlen(rowData);
+        
+        for (int iCol = 0; iCol < rowLength; iCol+= 2) {
+            char cellType = rowData[iCol];
+            if (cellType != ' ') {
+                Cell * pCell = addCell(x, y);
+                if (pCell) {
+                    if (pCell) {
+                        pCell->mNumAllowableConnections = MAX_CONNECTIONS;
+                        pCell->mActionFrequency = DEFAULT_ACTION_FREQUENCY;
+                    }
+                    switch (cellType) {
+                        case '0':
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                        default:
+                            pCell->mAction = 0;
+                            pCell->mMaxConnectionLength[0] = CELL_SIZE * (1.0 + double(cellType - '0') / 10.0);
+                            break;
+
+                        case 'M':
+                            pCell->mAction = actionContract;
+                            break;
+                            
+                        case 'm':
+                            pCell->mAction = actionContract;
+                            pCell->mActionPhase = DEFAULT_ACTION_FREQUENCY / 2;
+                            break;
+                            
+                    }
+                }
+            }
+            
+            x += cellDist;
+        }
+        y -= rowHeight;
+        
+        ++iRow;
+    }
+    
+    
+    
+    //return;
+    
+    CellPtr buffer[16];
+    
+    for (int i = 0; i < mAddedCells.size(); i++) {
+        Cell * pCell1 = mAddedCells[i];
+        for (int j = (i+1); j < mAddedCells.size(); j++) {
+            Cell * pCell2 = mAddedCells[j];
+            
+            if (pCell1->mNumConnections < pCell1->mNumAllowableConnections &&
+                pCell2->mNumConnections < pCell2->mNumAllowableConnections) {
+                
+                NUMBER distance = pCell1->mPos.distance(pCell2->mPos);
+                
+                if (distance <= cellDist * 1.25) {
+                    
+                    pCell1->connect(pCell2, cellDist, pCell1->mMaxConnectionLength[0]);
+                }
+            }
+        }
+    }
+    
 }
 
 void CreatureConstructor :: deleteAddedCells() {
@@ -259,14 +388,14 @@ void CreatureConstructor :: deleteAddedCells() {
 }
 
 Cell * CreatureConstructor :: createCell(int genomeIndex, NUMBER angle, NUMBER x, NUMBER y, int level) {
-
+    
     if (++level > 8) return NULL;
     
     Cell * pResult = NULL;
-
+    
     CellPtr buffer[16];
     WorldSpace &wp = mWorld.getWorldSpace();
-
+    
     NUMBER dist = CELL_SIZE * 1.1f;//1.25;
     NUMBER minDist = CELL_SIZE * .95;
     int numCollisions = wp.getNearbyCells(Point(x, y), minDist, buffer);
@@ -288,24 +417,24 @@ Cell * CreatureConstructor :: createCell(int genomeIndex, NUMBER angle, NUMBER x
     BYTE param = (g & 15);
     
     cell.mAction = instruction & 3;
-    cell.mPhase = param * 5 + 1;
+    cell.mActionFrequency = param * 5 + 1;
     if (cell.mAction == actionFlagellum) {
         if ( param < 7) {
-            cell.mPhase = 1000;
-         }
+            cell.mActionFrequency = 1000;
+        }
     }
     double elasticity = 1;
-
+    
     for (int i = 0; cell.mNumConnections < (MAX_CONNECTIONS-1) && i < MAX_CONNECTIONS; ) {
-
+        
         if (++mTurns > 10000) {
             return pResult;
         }
-
+        
         BYTE g = mGenome.genome[(genomeIndex++) % GENOME_LENGTH];
         BYTE instruction = (g >> 4);
         BYTE param = (g & 15);
-
+        
         Cell * pConnectWithCell = NULL;
         switch (instruction) {
             case 15:
@@ -337,7 +466,7 @@ Cell * CreatureConstructor :: createCell(int genomeIndex, NUMBER angle, NUMBER x
                 
                 break;
             }
-
+                
             case 8:
             case 9:
             case 10:
@@ -346,7 +475,7 @@ Cell * CreatureConstructor :: createCell(int genomeIndex, NUMBER angle, NUMBER x
             case 11:
                 genomeIndex = (genomeIndex + GENOME_LENGTH - param*2) % GENOME_LENGTH;
                 break;
-
+                
             case 12:
                 return pResult;
                 break;
@@ -356,7 +485,7 @@ Cell * CreatureConstructor :: createCell(int genomeIndex, NUMBER angle, NUMBER x
                 break;
         }
         
-                
+        
         if (pConnectWithCell) {
             int index = cell.mNumConnections++;
             cell.mConnections[index] = pConnectWithCell;
@@ -390,7 +519,7 @@ bool CreatureConstructor :: finalize() {
         
         pCell->mInitialEnergy = pCell->mEnergy;
         
-        pCell->mDefaultPhase = pCell->mPhase;
+        pCell->mDefaultPhase = pCell->mActionFrequency;
         
         switch (pCell->mAction) {
             case actionBite:
@@ -407,353 +536,76 @@ bool CreatureConstructor :: finalize() {
         }
         return false;
     }
-
-        return true;
-    CellPtr buffer[16];
     
-    std::vector<CellPtr*> preservedCells;
-
-//    std::vector<Cell*>::iterator i;
-        /*
-    std::vector<Cell*>::iterator i = mAddedCells.end();
-    --i;
-    while (i != mAddedCells.begin()) {
-        Cell * pCell = *i;
-        int numCollisions = wp.getNearbyCells(pCell, CELL_SIZE/2, buffer);
-        if (numCollisions > 0) {
-            wp.remove(pCell);
-            i = mAddedCells.erase(i);
-            if (mAddedCells.size() <= 1)
-                break;
-            --i;
-        }
-        --i;
-    }
-         */
-    
+    return true;
     /*
-    if (! mAddedCells.size())
-        return;
-
-    for (int i = 0; i < mAddedCells.size(); i++) {
-        Cell * pCell1 = mAddedCells[i];
-        for (int j = (i+1); j < mAddedCells.size(); j++) {
-            Cell * pCell2 = mAddedCells[j];
-            
-            if (pCell1->mNumConnections < pCell1->mNumAllowableConnections &&
-                pCell2->mNumConnections < pCell2->mNumAllowableConnections) {
-            
-                NUMBER distance = pCell1->mPos.distance(pCell2->mPos);
-                
-                if (distance <= pCell1->mMaxConnectionLength[pCell1->mNumConnections]) {
-                    
-                    pCell1->connect(pCell2);
-                }
-            }
-        }
-    }
+     CellPtr buffer[16];
+     
+     std::vector<CellPtr*> preservedCells;
+     
+     std::vector<Cell*>::iterator i = mAddedCells.end();
+     --i;
+     while (i != mAddedCells.begin()) {
+     Cell * pCell = *i;
+     int numCollisions = wp.getNearbyCells(pCell, CELL_SIZE/2, buffer);
+     if (numCollisions > 0) {
+     wp.remove(pCell);
+     i = mAddedCells.erase(i);
+     if (mAddedCells.size() <= 1)
+     break;
+     --i;
+     }
+     --i;
+     }
      */
     
     /*
-    if (mAddedCells.size() > 1) {
-        i = mAddedCells.begin();
-        ++i;
-        while (i != mAddedCells.end()) {
-            Cell * pCell = *i;
-            if (pCell->mNumConnections == 0) {
-                wp.remove(pCell);
-                i = mAddedCells.erase(i);
-            }
-            else ++i;
-        }
-    }
+     if (! mAddedCells.size())
+     return;
+     
+     for (int i = 0; i < mAddedCells.size(); i++) {
+     Cell * pCell1 = mAddedCells[i];
+     for (int j = (i+1); j < mAddedCells.size(); j++) {
+     Cell * pCell2 = mAddedCells[j];
+     
+     if (pCell1->mNumConnections < pCell1->mNumAllowableConnections &&
+     pCell2->mNumConnections < pCell2->mNumAllowableConnections) {
+     
+     NUMBER distance = pCell1->mPos.distance(pCell2->mPos);
+     
+     if (distance <= pCell1->mMaxConnectionLength[pCell1->mNumConnections]) {
+     
+     pCell1->connect(pCell2);
+     }
+     }
+     }
+     }
+     */
     
-    std::set<Cell*> connectedCells;
-    addCellsToSet(mAddedCells[0], connectedCells);
-    i = mAddedCells.begin();
-    for ( ; i != mAddedCells.end(); ) {
-        if (connectedCells.find(*i) == connectedCells.end()) {
-            wp.remove(*i);
-            i = mAddedCells.erase(i);
-        } else {
-            ++i;
-        }
-    }
+    /*
+     if (mAddedCells.size() > 1) {
+     i = mAddedCells.begin();
+     ++i;
+     while (i != mAddedCells.end()) {
+     Cell * pCell = *i;
+     if (pCell->mNumConnections == 0) {
+     wp.remove(pCell);
+     i = mAddedCells.erase(i);
+     }
+     else ++i;
+     }
+     }
+     
+     std::set<Cell*> connectedCells;
+     addCellsToSet(mAddedCells[0], connectedCells);
+     i = mAddedCells.begin();
+     for ( ; i != mAddedCells.end(); ) {
+     if (connectedCells.find(*i) == connectedCells.end()) {
+     wp.remove(*i);
+     i = mAddedCells.erase(i);
+     } else {
+     ++i;
+     }
+     }
      */
 }
-
-#if 0
-#if 1
-void CreatureConstructor :: go(Cell * pFromCell, NUMBER angle) {
-    NUMBER x, y;
-    
-    if (++mTurns > 10000) {
-        return;
-    }
-    
-    if (pFromCell) {
-        x = pFromCell->mPos.x;
-        y = pFromCell->mPos.y;
-    }
-    else {
-        x = WORLD_DIM/2;
-        y = WORLD_DIM/2;
-    }
-    
-    NUMBER dist = CELL_SIZE * 1.5;
-    
-    int numAdded = 0;
-    
-    
-    CellPtr buffer[16];
-    WorldSpace &wp = mWorld.getWorldSpace();
-    
-    // first, add a cell
-    Cell * pCell = pFromCell;
-    if (! pCell) {
-        int numCollisions = wp.getNearbyCells(Point(x, y), CELL_SIZE/2, buffer);
-        if (numCollisions > 0) {
-            return;
-        }
-        pCell = mWorld.addCell(x, y);
-        if (! pCell) {
-            return;
-        }
-    }
-    
-    // now populate its ports
-    int portIndex = 0;
-    while (mIndex < mNumCells && portIndex < MAX_CONNECTIONS) {
-        BYTE g = mGenome.genome[mIndex++];
-        
-        BYTE instruction = (g >> 4);
-        BYTE param = (g & 15);
-        
-        switch (instruction) {
-            default:
-                // skip this port
-                angle += angle2Radians(60);
-                ++portIndex;
-                if (portIndex >= MAX_CONNECTIONS) {
-                    return;
-                }
-                break;
-                
-            case 0: {
-                // add a connection to the port without a cell attached
-                pCell->mConnectionCellType[portIndex] = param;
-                break;
-            }
-                
-            case 1: {
-                // add a cell at the port
-                pCell->mConnectionCellType[portIndex] = param;
-                
-                if (pFromCell && pFromCell->mNumConnections >= pFromCell->mNumAllowableConnections) {
-                    return;
-                }
-                
-                NUMBER newX = x + cos(angle) * dist;
-                NUMBER newY = y + sin(angle) * dist;
-
-                // if there's no room for this cell, skip it
-                int numCollisions = wp.getNearbyCells(Point(newX,newY), CELL_SIZE/2, buffer);
-                if (numCollisions > 0) {
-                    break;
-                }
-                
-                Cell * pNewCell = mWorld.addCell(newX, newY);
-                if (pNewCell == NULL) {
-                    return;
-                }
-                if (mAddedCells.size() == 0) {
-                    pNewCell->mEntityIndex = pNewCell->mIndex;
-                }
-                else {
-                    pNewCell->mEntityIndex = mAddedCells[0]->mIndex;
-                }
-                
-                mAddedCells.push_back(pNewCell);
-                if (maxConnections >= MAX_CONNECTIONS) {
-                    maxConnections = MAX_CONNECTIONS - 1;
-                }
-                pNewCell->mNumAllowableConnections = maxConnections;
-                for (int i = 0; i < MAX_CONNECTIONS; i++) {
-                    pNewCell->mMaxConnectionLength[i] = elasticity * CELL_SIZE;
-                }
-                
-                pNewCell->mAction = param;
-                pNewCell->mPhase = 10;
-                
-                if (pFromCell) {
-                    pFromCell->connect(pNewCell);
-                }
-                go(pNewCell, angle + 6.28318530717959 * 135.0 / 360.0);
-                
-                if (pFromCell && pFromCell->mNumConnections >= pFromCell->mNumAllowableConnections) {
-                    return;
-                }
-                
-                if (! pFromCell) {
-                    return;
-                }
-                //                mAngle = 0;
-                break; }
-                
-            case 6:
-                maxConnections = 1 + (param % MAX_CONNECTIONS);
-                break;
-                
-            case 7:
-                elasticity = 1.1 + NUMBER(param) / 5.0;
-                break;
-                
-            case 8:
-            case 9:
-                flagellum = true;
-                break;
-                
-            case 10:
-            case 11:
-                //                mAngle += 6.28318530717959 * 135.0 / 360.0;
-                break;
-                
-            case 12:
-            case 13:
-                //                mAngle -= 6.28318530717959 * 135.0 / 360.0;
-                break;
-                
-            case 15:
-                return;
-                //                mNumCells = mIndex;
-                break;
-                
-        }
-    }
-}
-#else
-void CreatureConstructor :: go(Cell * pFromCell, NUMBER angle) {
-    NUMBER x, y;
-    
-    if (++mTurns > 10000) {
-        return;
-    }
-
-    if (pFromCell) {
-        x = pFromCell->mPos.x;
-        y = pFromCell->mPos.y;
-    }
-    else {
-        x = WORLD_DIM/2;
-        y = WORLD_DIM/2;
-    }
-    
-    NUMBER dist = CELL_SIZE;// * 1.25;
-    
-    int numAdded = 0;
-    
-
-    CellPtr buffer[16];
-    WorldSpace &wp = mWorld.getWorldSpace();
-
-    
-    while (mIndex < mNumCells) {
-        BYTE g = mGenome.genome[mIndex++];
-        
-        BYTE instruction = (g >> 4);
-        BYTE param = (g & 15);
-        
-        switch (instruction) {
-            default:
-                break;
-                
-            case 0:
-                angle -= 6.28318530717959 * 270.0 / 360.0;
-            case 1:
-                angle += 6.28318530717959 * 135.0 / 360.0;
-            case 2:
-            case 3:
-            case 4:
-            case 5: {
-                if (pFromCell && pFromCell->mNumConnections >= pFromCell->mNumAllowableConnections) {
-                    return;
-                }
-                NUMBER newX = x + cos(angle) * dist;
-                NUMBER newY = y + sin(angle) * dist;
-                
-                int numCollisions = wp.getNearbyCells(Point(newX,newY), CELL_SIZE/2, buffer);
-                if (numCollisions > 0) {
-                    break;
-                }
-                
-                Cell * pNewCell = mWorld.addCell(newX, newY);
-                if (pNewCell == NULL) {
-                    return;
-                }
-                if (mAddedCells.size() == 0) {
-                    pNewCell->mEntityIndex = pNewCell->mIndex;
-                }
-                else {
-                    pNewCell->mEntityIndex = mAddedCells[0]->mIndex;
-                }
-                
-                mAddedCells.push_back(pNewCell);
-                if (maxConnections >= MAX_CONNECTIONS) {
-                    maxConnections = MAX_CONNECTIONS - 1;
-                }
-                pNewCell->mNumAllowableConnections = maxConnections;
-                for (int i = 0; i < MAX_CONNECTIONS; i++) {
-                    pNewCell->mMaxConnectionLength[i] = elasticity * CELL_SIZE;
-                }
-                
-                pNewCell->mAction = param;
-                pNewCell->mPhase = 10;
-
-                if (pFromCell) {
-                    pFromCell->connect(pNewCell);
-                }
-                go(pNewCell, angle + 6.28318530717959 * 135.0 / 360.0);
-
-                if (pFromCell && pFromCell->mNumConnections >= pFromCell->mNumAllowableConnections) {
-                    return;
-                }
-                
-                if (! pFromCell) {
-                    return;
-                }
-//                mAngle = 0;
-                break; }
-                
-            case 6:
-                maxConnections = 1 + (param % MAX_CONNECTIONS);
-                break;
-                
-            case 7:
-                elasticity = 1.1 + NUMBER(param) / 5.0;
-                break;
-                
-            case 8:
-            case 9:
-                flagellum = true;
-                break;
-                
-            case 10:
-            case 11:
-//                mAngle += 6.28318530717959 * 135.0 / 360.0;
-                break;
-                
-            case 12:
-            case 13:
-//                mAngle -= 6.28318530717959 * 135.0 / 360.0;
-                break;
-                
-            case 15:
-                return;
-//                mNumCells = mIndex;
-                break;
-
-        }
-    }
-}
-#endif
-#endif

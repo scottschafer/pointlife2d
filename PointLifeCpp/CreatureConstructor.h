@@ -27,6 +27,7 @@ public:
 class CreatureConstructor {
 public:
     CreatureConstructor(World &, Genome &);
+    CreatureConstructor(World &, const char ** asciArt);
     
     Cell * createCell(int genomeIndex, NUMBER angle, NUMBER x, NUMBER y, int level = 0);
     Cell * addCell(NUMBER x, NUMBER y);
@@ -36,6 +37,8 @@ public:
     
     void processGenome(int genomeIndex, int iCellA = 0, int iCellB = 0, int level = 0, int maxLevel = 0,
                        NUMBER elasticity = 0);
+    
+    void processAsciArt();
     
     bool go(NUMBER x = -1, NUMBER y = -1);
     void deleteAddedCells();
@@ -51,6 +54,7 @@ private:
     
 private:
     World & mWorld;
+    const char ** mAsciArt;
     Genome & mGenome;
     NUMBER mOffsetX, mOffsetY;
     int mNumCells;

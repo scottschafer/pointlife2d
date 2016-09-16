@@ -11,6 +11,27 @@
 #ifndef PointLifeCpp_constants_h
 #define PointLifeCpp_constants_h
 
+// how many turns does a contraction take?
+#define CONTRACT_TURN_COUNT 6
+
+// default action frequency
+#define DEFAULT_ACTION_FREQUENCY 30
+
+
+#define NUM_CONNECTION_PHYSICS_ITERATIONS 5
+#define INACTIVE_AFTER_BITE_COUNT 20
+#define VELOCITY_DAMPING 1
+
+#define ALLOW_DEATH 0
+
+#define TURN_COST 0.0001
+#define BITE_GAIN 6
+#define BITE_COST 6
+#define MOVE_ENERGY .002
+#define FLAGELLUM_TURNS 20
+
+#define MAX_VELOCITY (CELL_SIZE*.4)
+
 #define BATCH_MOVE_POINTS 0
 #define USE_SIMULATION_THREAD 1
 

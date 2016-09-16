@@ -12,20 +12,80 @@
 #include "Random.h"
 #include "CreatureConstructor.h"
 
-#define NUM_CONNECTION_PHYSICS_ITERATIONS 5
-//25
-#define CONTRACT_TURN_COUNT 100
-#define INACTIVE_AFTER_BITE_COUNT 20
-//50
-#define VELOCITY_DAMPING 1
+#define USE_ASCII_ART 1
 
-const NUMBER TURN_COST = 0.0001;
-const NUMBER BITE_GAIN = 6;
-const NUMBER BITE_COST = 6;
-const NUMBER MOVE_ENERGY = .002;
-const NUMBER FLAGELLUM_TURNS = 20;
+// ASCII art representation of sample critters.
+//
+// Only every other character is considered, starting on the first character on even rows and the second character on odd rows.
+// Cells are automatically selected based on proximity.
+//
+// M = contract, shrinking the maximum allowable distance from this cell to connected ceels down to CELL_SIZE over CONTRACT_TURN_COUNT turns
+// m = same as M, but the phase is offset by DEFAULT_ACTION_FREQUENCY / 2
+// 0 - 5 indicates a cell with varying levels of flexibility in its connections. 0 = least flexibility, 5 = most
+//
+// Keystrokes:
+//  [   Slow down
+//  ]   Speed up
+//  +   Zoom in
+//  -   Zoom out
+//  n   Focus next critter, unused in this mode
 
-#define MAX_VELOCITY (CELL_SIZE*.4)
+const char * asciiArt[] =
+{
+    "                ",
+    "                ",
+    "                ",
+    "   0 0 0        ",
+    "  0 0 0 0 0     ",
+    "   0 0 m 0 0    ",
+    "  0 0 M m       ",
+    "   0   M 5      ",
+    "        5 5     ",
+    "         5 5    ",
+    "          5 5   ",
+    "           5 5  ",
+    "            5 5 ",
+    "             5 5 ",
+    0
+};
+
+/*
+ const char * asciiArt[] =
+ {
+ "  0     0  ",
+ " 0 0   0 0 ",
+ "0 0     0 0",
+ " 0 0   0 0 ",
+ "0 0 0 0 0 0",
+ " 0 M M M 0 ",
+ "0 0 M M 0 0",
+ " 0 0 M 0 0 ",
+ "  0 0 0 0   ",
+ "   0 0 0   ",
+ "    0 0    ",
+ "     0     ",
+ 0
+ };
+ 
+ const char * asciiArt[] =
+ {
+ "    5     ",
+ "   5 5    ",
+ "    M M   ",
+ "     M 5   ",
+ "    5 M    ",
+ "   M M     ",
+ "    M 5    ",
+ " 0 0 0 0 0 ",
+ "  0 0 0 0  ",
+ "   0 0 0   ",
+ "    0 0    ",
+ "     0     ",
+ 0
+ };
+ 
+*/
+
 
 
 //#undef  NUM_GENOMES_TO_TEST
@@ -86,14 +146,29 @@ void World :: randomize()
 }
 
 void World::spawn() {
+
+#if USE_ASCII_ART
+    extern void focusNextCritter();
     
+    if (mNumEntities < 1) {
+        generateNewEntity(asciiArt);
+        ++mNumEntities;
+        Globals::minMsPerTurn = 3;
+        focusNextCritter();
+    }
+#else
+    
+
+    // generate new creatures if there are fewer than 100 on the board
     if (mNumEntities < 100) {
+        // if less than 80, generate a completely random one
         if (mNumEntities < 80) {
             Genome g;
             g.randomize();
             generateNewEntity(g);
         }
         else {
+            // otherwise mutate one of the most successful ones
             Genome g(*getTopGenome());
             int numMutations = Random::randRange(0, 10);
             for (int i = 0; i < numMutations; i++) {
@@ -102,7 +177,7 @@ void World::spawn() {
             generateNewEntity(g);
         }
     }
-    
+#endif
 }
 
 
@@ -268,7 +343,7 @@ void World :: applyConnectionPhysics(NUMBER fraction) {
                 double fraction = double(1.0 + pCell->mContractTurnCount - CONTRACT_TURN_COUNT / 2) / double(CONTRACT_TURN_COUNT);
                 fraction *= fraction * 4; // 1 to 0 to 1
                 
-                //maxDist = maxDist * fraction + (1.0 - fraction) * CELL_SIZE;
+                maxDist = maxDist * fraction + (1.0 - fraction) * CELL_SIZE;
             }
             
             if (maxDist < minDist) {
@@ -331,7 +406,7 @@ void World :: sendSignal(Cell * pCell, int signal, int level) {
         if (pCell->mConnectionOptions[i] & signal) {
             pToCell->mActivated = true;
             if (pToCell->mAction == actionFlagellum) {
-                pToCell->mPhase = 2;// + level * 5;
+                pToCell->mActionFrequency = 2;// + level * 5;
                 return;
             }
             sendSignal(pToCell, signal, level + 1);
@@ -483,7 +558,7 @@ void enableMove(Cell *pCell, int * pTimeout) {
             Cell * pConnectedCell = pCell->mConnections[i];
             
             if (pConnectedCell && pConnectedCell->mAction == actionFlagellum) {
-                pConnectedCell->mPhase = 2;
+                pConnectedCell->mActionFrequency = 2;
                 *pTimeout = 0;
                 return;
             }
@@ -498,6 +573,7 @@ void contract(Cell * pCell) {
     if (! pCell->mContractTurnCount) {
         
         pCell->mContractTurnCount = CONTRACT_TURN_COUNT;
+        return;
         for (int i = 0; i < pCell->mNumConnections; i++) {
             Cell *pToCell = pCell->mConnections[i];
             if (! pToCell->mContractTurnCount) {
@@ -527,7 +603,7 @@ void World :: processCellActivity() {
         int action = pCell->mAction;
         
 
-        if (numConnections > 1 && (turn % pCell->mPhase) == 0) {
+        if (numConnections > 1 && ((turn + pCell->mActionPhase) % pCell->mActionFrequency) == 0) {
             
             if (action == actionContract) {
                 contract(pCell);
@@ -541,7 +617,7 @@ void World :: processCellActivity() {
                 }
                 NUMBER length = pCell->mNumAllConnections + 2;
 
-                pCell->mPhase = pCell->mDefaultPhase;
+                pCell->mActionFrequency = pCell->mDefaultPhase;
                 Point v(CELL_SIZE * xd / length, CELL_SIZE * yd / length);
 
                 switch (action) {
@@ -642,6 +718,7 @@ void World :: turnCrank() {
         prepareGenomeForTest();
     }
     
+    //return;
     Cell * pCell = mCells;
     NUMBER vDamper = VELOCITY_DAMPING;
     Cell * pLastEntityCell = NULL;
@@ -649,6 +726,7 @@ void World :: turnCrank() {
     for (int i = 0; i < NUM_CELLS; i++) {
         if (pCell->mOnBoard)
         {
+#if ALLOW_DEATH
             pCell->mEntityHead->mEnergy -= TURN_COST;
             if (pCell->mEntityHead->mEnergy < 0) {
                 if (pCell->mEntityHead->mNumConnections) {
@@ -659,6 +737,7 @@ void World :: turnCrank() {
                 }
                 continue;
             }
+#endif
             
             pCell->mVelocity.x *= vDamper;
             pCell->mVelocity.y *= vDamper;
@@ -753,6 +832,10 @@ void World :: removeCell(Cell *pCell) {
 }
 
 void World :: killEntity(Cell *pCell) {
+#if ! ALLOW_DEATH
+    return;
+#endif
+    
     if (pCell && pCell->mOnBoard) {
         int entityIndex = pCell->mEntityIndex;
         if (pCell->mNumConnections) {
@@ -882,6 +965,40 @@ void World::generateNewEntity(Genome g) {
     }
 }
 
+void World::generateNewEntity(const char ** asciArt) {
+    // step #1, find empty spot
+    CellPtr resultArray[20];
+    
+    NUMBER x, y;
+    NUMBER size = CELL_SIZE * 20.0;
+    bool found = false;
+    for (int i = 0; i < 20; i++) {
+        x = Random::randRange(size/2.0, WORLD_DIM - size/2.0);
+        y = Random::randRange(size/2.0, WORLD_DIM - size/2.0);
+        
+        if (0 == mWorldSpace.getNearbyCells(Point(x,y), size, resultArray)) {
+            found = true;
+            break;
+        }
+    }
+    
+    x = y = 0;
+    int count = 0;
+    if (found) {
+        while (true) {
+            if (++count > 100) {
+                break;
+            }
+            
+            CreatureConstructor c(*this, asciArt);
+            if (c.go(x, y)) {
+                ++mNumEntities;
+                break;
+            }
+        }
+    }
+
+}
 
 NUMBER calcDistance(Cell * pCell) {
     NUMBER result = 0;
@@ -995,20 +1112,6 @@ void World :: prepareGenomeForTest() {
             }
         }
     }
-    /*
-    else {
-        for (int i = 0; i < 200; i++) {
-            
-            NUMBER lb = .4 * WORLD_DIM;
-            NUMBER ub = .6 * WORLD_DIM;
-            
-            NUMBER x = Random::randRange(lb, ub);
-            NUMBER y = Random::randRange(lb, ub);
-            
-            Cell * pNewCell = addCell(x,y, CELL_SIZE);
-        }
-    }
-     */
 }
 
 int randomIndex() {

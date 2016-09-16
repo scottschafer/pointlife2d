@@ -32,6 +32,7 @@ public:
     
     Genome * getTopGenome();
     void generateNewEntity(Genome);
+    void generateNewEntity(const char ** asciiArt);
     
     int getGeneration();
     int getTestIndex();

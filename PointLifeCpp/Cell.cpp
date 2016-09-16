@@ -15,7 +15,7 @@ void Cell::randomize() {
     mVelocity.randomize(-INITIAL_VELOCITY, INITIAL_VELOCITY);
 //    mNumAllowableConnections = (int) MIN(Random::randRange(0, MAX_CONNECTIONS+1), MAX_CONNECTIONS);
  
-    mPhase = Random::randRange(10, 200);
+    mActionFrequency = Random::randRange(10, 200);
     mStrength = Random::randRange(NUMBER(.5), NUMBER(2.0));
     mAction = Random::randRange(0,20);
     
@@ -26,6 +26,9 @@ void Cell::randomize() {
 
 
 void Cell :: reset() {
+    
+    mActionFrequency = DEFAULT_ACTION_FREQUENCY;
+    mActionPhase = 0;
     
     mNumAllConnections = 0;
     mActivated = false;

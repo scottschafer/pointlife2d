@@ -75,7 +75,8 @@ public:
     
     int mAction;
     int mParam;
-    int mPhase;
+    int mActionFrequency;
+    int mActionPhase;
     int mInactiveCount;
     int mDefaultPhase;
     NUMBER mStrength;
